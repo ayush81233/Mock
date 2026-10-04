@@ -1,0 +1,156 @@
+.schemes-page {
+  background: #f7f8fa;
+  min-height: 100vh;
+}
+
+.page-header {
+  background: #eef3f8;
+  border-bottom: 1px solid #d9e0e8;
+  padding: 55px 0;
+}
+
+.page-header span {
+  color: #1f5b95;
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: 1px;
+}
+
+.page-header h1 {
+  margin: 10px 0;
+  font-size: 42px;
+  color: #172333;
+}
+
+.page-header p {
+  max-width: 700px;
+  color: #596879;
+  line-height: 1.7;
+  font-size: 16px;
+}
+
+
+/* Scheme Sections */
+
+.scheme-section {
+  padding: 60px 0;
+}
+
+.scheme-section.alternate {
+  background: white;
+  border-top: 1px solid #e1e6ec;
+  border-bottom: 1px solid #e1e6ec;
+}
+
+.scheme-section-heading {
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 30px;
+  margin-bottom: 30px;
+}
+
+.scheme-section-heading span {
+  color: #1f5b95;
+  font-size: 12px;
+  font-weight: 700;
+}
+
+.scheme-section-heading h2 {
+  margin: 8px 0 0;
+  font-size: 30px;
+  color: #172333;
+}
+
+.scheme-section-heading p {
+  color: #697686;
+}
+
+
+/* Cards */
+
+.scheme-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 20px;
+}
+
+.scheme-card {
+  background: white;
+  border: 1px solid #d8e0e8;
+  padding: 28px;
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.alternate .scheme-card {
+  background: #f9fafb;
+}
+
+.scheme-card:hover {
+  transform: translateY(-3px);
+  box-shadow: 0 10px 25px rgba(20, 40, 60, 0.08);
+}
+
+.scheme-card-top {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.scheme-category {
+  color: #1f5b95;
+  background: #eaf1f8;
+  padding: 5px 9px;
+  font-size: 11px;
+  font-weight: 700;
+  text-transform: uppercase;
+}
+
+.scheme-id {
+  color: #8a95a3;
+  font-size: 11px;
+}
+
+.scheme-card h3 {
+  font-size: 22px;
+  color: #1d2938;
+  margin: 20px 0 10px;
+}
+
+.scheme-card p {
+  color: #637182;
+  line-height: 1.7;
+  font-size: 14px;
+}
+
+.scheme-link {
+  display: inline-block;
+  margin-top: 12px;
+  color: #123b6d;
+  font-weight: 700;
+  font-size: 14px;
+  text-decoration: none;
+}
+
+.scheme-link:hover {
+  text-decoration: underline;
+}
+
+
+/* Responsive */
+
+@media (max-width: 700px) {
+
+  .scheme-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .scheme-section-heading {
+    display: block;
+  }
+
+  .scheme-section-heading p {
+    margin-top: 12px;
+  }
+
+}

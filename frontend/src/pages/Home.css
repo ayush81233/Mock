@@ -1,0 +1,296 @@
+.home-page {
+  background: #f7f8fa;
+}
+
+.primary-button,
+.secondary-button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  text-decoration: none;
+}
+/* HERO */
+
+.hero {
+  background: #eef3f8;
+  border-bottom: 1px solid #d9e0e8;
+}
+
+.hero-content {
+  min-height: 440px;
+  display: grid;
+  grid-template-columns: 1.5fr 0.8fr;
+  align-items: center;
+  gap: 70px;
+}
+
+.hero-label {
+  font-size: 13px;
+  font-weight: 700;
+  color: #1f5b95;
+  letter-spacing: 1px;
+}
+
+.hero h1 {
+  max-width: 720px;
+  margin: 14px 0;
+  font-size: clamp(38px, 5vw, 58px);
+  line-height: 1.08;
+  color: #172333;
+}
+
+.hero-text p {
+  max-width: 650px;
+  font-size: 18px;
+  line-height: 1.7;
+  color: #536171;
+}
+
+.hero-actions {
+  display: flex;
+  gap: 12px;
+  margin-top: 28px;
+}
+
+.primary-button,
+.secondary-button {
+  padding: 13px 20px;
+  border-radius: 4px;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.primary-button {
+  background: #123b6d;
+  border: 1px solid #123b6d;
+  color: white;
+}
+
+.secondary-button {
+  background: white;
+  border: 1px solid #123b6d;
+  color: #123b6d;
+}
+
+
+/* HERO PANEL */
+
+.hero-panel {
+  background: white;
+  border: 1px solid #d7dee7;
+  padding: 26px;
+  box-shadow: 0 8px 24px rgba(20, 40, 60, 0.08);
+}
+
+.hero-panel h3 {
+  margin-top: 0;
+  color: #172333;
+}
+
+.hero-panel a {
+  width: 100%;
+  display: block;
+  text-align: left;
+  background: #f7f9fb;
+  border: 1px solid #e1e6ec;
+  padding: 13px;
+  margin-top: 9px;
+  cursor: pointer;
+  text-decoration: none;
+  color: #1f2937;
+}
+
+.hero-panel a:hover {
+  background: #eef3f8;
+}
+
+
+/* GENERAL SECTIONS */
+
+.section {
+  padding: 65px 0;
+}
+
+.section-heading {
+  margin-bottom: 30px;
+}
+
+.section-heading span,
+.section-label {
+  color: #1f5b95;
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: 1px;
+}
+
+.section-heading h2 {
+  margin: 8px 0;
+  font-size: 32px;
+  color: #172333;
+}
+
+.section-heading p {
+  color: #687585;
+}
+
+
+/* SERVICES */
+
+.service-grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 18px;
+}
+
+.service-card {
+  background: white;
+  border: 1px solid #dde3ea;
+  padding: 25px;
+  min-height: 190px;
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.service-card:hover {
+  transform: translateY(-3px);
+  box-shadow: 0 8px 25px rgba(0, 0, 0, 0.07);
+}
+
+.service-icon {
+  width: 42px;
+  height: 42px;
+  background: #eaf1f8;
+  color: #123b6d;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 21px;
+  margin-bottom: 18px;
+}
+
+.service-card h3 {
+  color: #1c2938;
+  margin: 0 0 10px;
+}
+
+.service-card p {
+  color: #657282;
+  line-height: 1.6;
+  font-size: 14px;
+}
+
+
+/* CATEGORIES */
+
+.category-section {
+  padding: 65px 0;
+  background: white;
+  border-top: 1px solid #e1e6ec;
+  border-bottom: 1px solid #e1e6ec;
+}
+
+.category-grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 18px;
+}
+
+.category-card {
+  border: 1px solid #dce3ea;
+  padding: 28px;
+  min-height: 170px;
+}
+
+.category-card span {
+  font-size: 12px;
+  color: #1f5b95;
+  font-weight: 700;
+}
+
+.category-card h3 {
+  font-size: 23px;
+  margin: 15px 0 8px;
+}
+
+.category-card p {
+  color: #697686;
+  line-height: 1.6;
+}
+
+
+/* INFORMATION */
+
+.information-box {
+  background: #fff;
+  border: 1px solid #dbe2e9;
+  padding: 35px;
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 50px;
+}
+
+.information-box h2 {
+  margin-top: 10px;
+  color: #172333;
+}
+
+.information-list p {
+  color: #4f5d6c;
+  margin: 12px 0;
+}
+
+
+/* RESPONSIVE */
+
+@media (max-width: 900px) {
+
+  .hero-content {
+    grid-template-columns: 1fr;
+    padding: 55px 0;
+  }
+
+  .service-grid,
+  .category-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+
+  .information-box {
+    grid-template-columns: 1fr;
+  }
+
+}
+
+@media (max-width: 600px) {
+
+  .service-grid,
+  .category-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .hero-actions {
+    flex-direction: column;
+  }
+
+  .hero-actions button {
+    width: 100%;
+  }
+
+}
+
+.nav-inner a {
+  position: relative;
+}
+
+.nav-inner a::after {
+  content: "";
+  position: absolute;
+  left: 18px;
+  right: 18px;
+  bottom: 6px;
+  height: 2px;
+  background: transparent;
+}
+
+.nav-inner a:hover::after {
+  background: #f0b400;
+}
