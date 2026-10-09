@@ -181,11 +181,30 @@ function ApplyScheme() {
   };
 
   // Document Upload Handler
-  const handleFileUpload = async (canonicalDocType, file) => {
-    if (!file || !application) return;
+  const handleFileUpload = async (canonicalDocType, file, inputElement = null) => {
+    if (!file) return;
+
+    let activeApp = application;
+    if (!activeApp && schemeId) {
+      try {
+        activeApp = await createApplication(schemeId, formData);
+        setApplication(activeApp);
+      } catch (err) {
+        console.error("Failed to create draft application:", err);
+        setError("Unable to create draft application for file upload.");
+        if (inputElement) inputElement.value = "";
+        return;
+      }
+    }
+
+    if (!activeApp) {
+      if (inputElement) inputElement.value = "";
+      return;
+    }
 
     if (file.size > 5 * 1024 * 1024) {
       alert("File size exceeds 5MB limit. Please upload a smaller file.");
+      if (inputElement) inputElement.value = "";
       return;
     }
 
@@ -193,6 +212,7 @@ function ApplyScheme() {
     const fileExt = file.name.substring(file.name.lastIndexOf(".")).toLowerCase();
     if (!validExts.includes(fileExt)) {
       alert("Invalid file format. Allowed formats: PDF, JPG, JPEG, PNG.");
+      if (inputElement) inputElement.value = "";
       return;
     }
 
@@ -201,7 +221,7 @@ function ApplyScheme() {
 
     try {
       const savedDoc = await uploadApplicationDocument(
-        application.application_number,
+        activeApp.application_number,
         canonicalDocType,
         file
       );
@@ -215,6 +235,7 @@ function ApplyScheme() {
       setError(err.message || "Failed to upload document.");
     } finally {
       setUploadingDoc((prev) => ({ ...prev, [canonicalDocType]: false }));
+      if (inputElement) inputElement.value = "";
     }
   };
 
@@ -706,7 +727,7 @@ function ApplyScheme() {
                               style={{ display: "none" }}
                               onChange={(e) => {
                                 if (e.target.files && e.target.files[0]) {
-                                  handleFileUpload(doc.canonicalName, e.target.files[0]);
+                                  handleFileUpload(doc.canonicalName, e.target.files[0], e.target);
                                 }
                               }}
                             />
