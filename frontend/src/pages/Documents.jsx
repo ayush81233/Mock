@@ -1,154 +1,283 @@
-import { Link } from "react-router-dom";
-import { documents } from "../data/documents";
+import { useState } from "react";
 import { useTranslation } from "../i18n";
 import "./Documents.css";
 
+const DOCUMENT_TYPES = [
+  {
+    id: "identity",
+    icon: "🪪",
+    category: "Identity",
+    examples: ["Aadhaar Card", "Voter ID Card", "PAN Card", "Passport", "Driving Licence"],
+    acceptedBy: "Most welfare, health, pension schemes",
+    issuedBy: "UIDAI / Election Commission / Income Tax Dept / MEA / RTO",
+  },
+  {
+    id: "income",
+    icon: "💰",
+    category: "Income",
+    examples: ["Income Certificate", "BPL Card", "Ration Card", "Salary Slip / Form 16"],
+    acceptedBy: "Means-tested subsidy and pension schemes",
+    issuedBy: "Tehsildar / Revenue Dept / FPS / Employer",
+  },
+  {
+    id: "residence",
+    icon: "🏠",
+    category: "Residence",
+    examples: ["Domicile Certificate", "Utility Bill (Electricity / Water)", "Rent Agreement", "Bank Passbook (address page)"],
+    acceptedBy: "State-specific and location-restricted schemes",
+    issuedBy: "Revenue Dept / DISCOM / Landlord / Bank",
+  },
+  {
+    id: "bank",
+    icon: "🏦",
+    category: "Bank",
+    examples: ["Bank Passbook (first page)", "Cancelled Cheque", "Bank Account Statement"],
+    acceptedBy: "DBT / direct benefit transfer schemes",
+    issuedBy: "Scheduled Bank",
+  },
+  {
+    id: "caste",
+    icon: "📜",
+    category: "Caste / Community",
+    examples: ["Caste Certificate (SC/ST/OBC)", "Community Certificate", "Non-Creamy Layer Certificate"],
+    acceptedBy: "Reserved-category and social welfare schemes",
+    issuedBy: "Tehsildar / Revenue Dept",
+  },
+  {
+    id: "disability",
+    icon: "♿",
+    category: "Disability",
+    examples: ["Disability Certificate (UDID)", "Medical Certificate from Govt Hospital"],
+    acceptedBy: "Divyangjan welfare schemes",
+    issuedBy: "Designated Medical Authority / UDID Portal",
+  },
+  {
+    id: "age",
+    icon: "📅",
+    category: "Age / Birth Proof",
+    examples: ["Birth Certificate", "School Leaving Certificate / Marksheet", "Aadhaar (age proxy)"],
+    acceptedBy: "Senior citizen pension, child welfare schemes",
+    issuedBy: "Municipal Authority / School Board / UIDAI",
+  },
+  {
+    id: "photo",
+    icon: "📷",
+    category: "Photograph",
+    examples: ["Recent passport-size photograph (colour, plain background)"],
+    acceptedBy: "Nearly all schemes require recent photo",
+    issuedBy: "Self / Photo studio",
+  },
+];
+
+const UPLOAD_TIPS = [
+  "Scan or photograph documents in good lighting — text must be clearly readable.",
+  "Accepted formats: PDF, JPG, JPEG, PNG. Maximum size: 5 MB per file.",
+  "Ensure all four corners of the document are visible in the upload.",
+  "Do NOT upload expired documents. Certificates must be issued within validity period.",
+  "Self-attested copies may be required — sign and write 'True Copy' on the copy.",
+  "Never share your Aadhaar OTP, bank PIN, or passwords with any portal representative.",
+];
+
 function Documents() {
   const { t, language } = useTranslation();
+  const [activeCategory, setActiveCategory] = useState(null);
+  const [searchQuery, setSearchQuery] = useState("");
 
-  const categories = [
-    {
-      id: "Identity",
-      name: language === "kn" ? "ಗುರುತಿನ ದಾಖಲೆಗಳು" : language === "hi" ? "पहचान दस्तावेज़" : "Identity",
-      desc: language === "kn" ? "ಆಧಾರ್, ವೋಟರ್ ಐಡಿ ಮುಂತಾದ ಗುರುತಿನ ಪುರಾವೆಗಳು." : language === "hi" ? "आधार, मतदाता पहचान पत्र जैसे पहचान प्रमाण।" : "Aadhaar, Voter ID and government photo credentials."
-    },
-    {
-      id: "Income",
-      name: language === "kn" ? "ಆದಾಯ ದಾಖಲೆಗಳು" : language === "hi" ? "आय दस्तावेज़" : "Income",
-      desc: language === "kn" ? "ಆದಾಯ ಪ್ರಮಾಣಪತ್ರ ಮತ್ತು ಸಂಬಳದ ಪುರಾವೆಗಳು." : language === "hi" ? "आय प्रमाण पत्र और वेतन प्रमाण।" : "Income certificates and financial eligibility credentials."
-    },
-    {
-      id: "Residence",
-      name: language === "kn" ? "ವಾಸಸ್ಥಳ ದಾಖಲೆಗಳು" : language === "hi" ? "निवास दस्तावेज़" : "Residence",
-      desc: language === "kn" ? "ವಾಸಸ್ಥಳ ಪ್ರಮಾಣಪತ್ರ ಮತ್ತು ವಿಳಾಸದ ಪುರಾವೆಗಳು." : language === "hi" ? "निवास प्रमाण पत्र और पते के प्रमाण।" : "Domicile and address verification credentials."
-    },
-    {
-      id: "Bank",
-      name: language === "kn" ? "ಬ್ಯಾಂಕ್ ದಾಖಲೆಗಳು" : language === "hi" ? "बैंक दस्तावेज़" : "Bank",
-      desc: language === "kn" ? "ಬ್ಯಾಂಕ್ ಪಾಸ್‌ಬುಕ್ ಮತ್ತು ಖಾತೆಯ ವಿವರಗಳು." : language === "hi" ? "बैंक पासबुक और खाता विवरण।" : "Bank passbook and direct benefit transfer details."
-    },
-    {
-      id: "Other",
-      name: language === "kn" ? "ಇತರ ದಾಖಲೆಗಳು" : language === "hi" ? "अन्य दस्तावेज़" : "Other",
-      desc: language === "kn" ? "ಜಾತಿ ಪ್ರಮಾಣಪತ್ರ, ಅಂಗವೈಕಲ್ಯ ಪ್ರಮಾಣಪತ್ರ ಇತ್ಯಾದಿ." : language === "hi" ? "जाति प्रमाण पत्र, दिव्यांगता प्रमाण पत्र आदि।" : "Caste, disability, or specialized welfare certificates."
-    }
-  ];
+  const filtered = DOCUMENT_TYPES.filter((doc) => {
+    if (!searchQuery.trim()) return true;
+    const q = searchQuery.toLowerCase();
+    return (
+      doc.category.toLowerCase().includes(q) ||
+      doc.examples.some((ex) => ex.toLowerCase().includes(q)) ||
+      doc.issuedBy.toLowerCase().includes(q)
+    );
+  });
 
   return (
     <div className="documents-page">
 
-      {/* Header */}
+      {/* ── Header ── */}
       <section className="documents-header">
         <div className="container">
-          <span className="documents-label">
-            {t("home.quickDocuments")}
-          </span>
-
+          <span className="documents-label">{t("home.quickDocuments")}</span>
           <h1>{t("documents.title")}</h1>
-
           <p>{t("documents.subtitle")}</p>
+
+          {/* Search */}
+          <div className="doc-search-bar">
+            <span className="doc-search-icon">🔎</span>
+            <input
+              type="text"
+              id="document-search"
+              data-testid="document-search-input"
+              placeholder={t("documents.searchPlaceholder")}
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              aria-label="Search documents"
+            />
+            {searchQuery && (
+              <button
+                type="button"
+                className="doc-search-clear"
+                onClick={() => setSearchQuery("")}
+                aria-label="Clear search"
+              >
+                ✕
+              </button>
+            )}
+          </div>
         </div>
       </section>
 
-      {/* Notice */}
-      <section className="documents-notice-section">
+      {/* ── Upload Guidelines ── */}
+      <section className="doc-guidelines-section">
         <div className="container">
-          <div className="documents-notice">
-            <div className="notice-symbol">!</div>
-            <div>
-              <strong>{t("footer.importantTitle")}</strong>
-              <p>{t("footer.disclaimerText")}</p>
+          <div className="doc-guidelines-card">
+            <div className="doc-guideline-header">
+              <span className="doc-guideline-icon">📋</span>
+              <div>
+                <h2>Document Upload Guidelines</h2>
+                <p>Follow these rules to ensure your documents are accepted by the system.</p>
+              </div>
+            </div>
+            <div className="doc-tips-grid">
+              {UPLOAD_TIPS.map((tip, i) => (
+                <div key={i} className="doc-tip-item">
+                  <span className="doc-tip-num">{String(i + 1).padStart(2, "0")}</span>
+                  <p>{tip}</p>
+                </div>
+              ))}
             </div>
           </div>
         </div>
       </section>
 
-      {/* Categories */}
-      <section className="document-categories">
+      {/* ── Document Types Reference ── */}
+      <section className="doc-types-section">
         <div className="container">
-          <div className="section-heading">
-            <span>{t("home.categoriesTitle")}</span>
-            <h2>{t("documents.title")}</h2>
-            <p>{t("documents.subtitle")}</p>
+
+          <div className="section-heading" style={{ textAlign: "left", marginBottom: "24px" }}>
+            <span className="section-label">REQUIRED DOCUMENT TYPES</span>
+            <h2>Documents Commonly Required for Government Schemes</h2>
+            <p>
+              Click any category to see which documents are accepted, who issues them, and
+              which types of schemes require them.
+            </p>
           </div>
 
-          <div className="document-category-grid">
-            {categories.map((cat, idx) => {
-              const docItem = documents.find((item) => item.category === cat.id) || documents[0];
+          {filtered.length === 0 && (
+            <div className="doc-no-results">
+              <p>No documents matched "<strong>{searchQuery}</strong>".</p>
+            </div>
+          )}
 
-              return (
-                <Link
-                  key={cat.id}
-                  to={`/documents/${docItem.id}`}
-                  className="document-category-card"
+          <div className="doc-type-grid" data-testid="document-type-grid">
+            {filtered.map((doc) => (
+              <div
+                key={doc.id}
+                className={`doc-type-card ${activeCategory === doc.id ? "expanded" : ""}`}
+                data-testid={`doc-type-card-${doc.id}`}
+              >
+                {/* Card Header — always visible */}
+                <button
+                  type="button"
+                  className="doc-type-header"
+                  data-testid={`doc-type-toggle-${doc.id}`}
+                  onClick={() => setActiveCategory(activeCategory === doc.id ? null : doc.id)}
+                  aria-expanded={activeCategory === doc.id}
                 >
-                  <div className="document-card-number">
-                    {String(idx + 1).padStart(2, "0")}
+                  <span className="doc-type-icon">{doc.icon}</span>
+                  <span className="doc-type-name">{doc.category}</span>
+                  <span className="doc-type-chevron">
+                    {activeCategory === doc.id ? "▲" : "▼"}
+                  </span>
+                </button>
+
+                {/* Expanded Detail */}
+                {activeCategory === doc.id && (
+                  <div className="doc-type-detail" data-testid={`doc-type-detail-${doc.id}`}>
+
+                    <div className="doc-detail-row">
+                      <span className="doc-detail-label">Accepted Documents</span>
+                      <ul className="doc-detail-list">
+                        {doc.examples.map((ex, i) => (
+                          <li key={i}>📄 {ex}</li>
+                        ))}
+                      </ul>
+                    </div>
+
+                    <div className="doc-detail-row">
+                      <span className="doc-detail-label">
+                        {t("documents.issuingAuthority")}
+                      </span>
+                      <p className="doc-detail-value">{doc.issuedBy}</p>
+                    </div>
+
+                    <div className="doc-detail-row">
+                      <span className="doc-detail-label">
+                        {t("documents.requiredFor")}
+                      </span>
+                      <p className="doc-detail-value">{doc.acceptedBy}</p>
+                    </div>
+
                   </div>
-
-                  <h3>{cat.name}</h3>
-
-                  <p>{cat.desc}</p>
-
-                  <span>{t("documents.viewDetails")} →</span>
-                </Link>
-              );
-            })}
+                )}
+              </div>
+            ))}
           </div>
         </div>
       </section>
 
-      {/* Mock Documents */}
-      <section className="mock-documents-section">
+      {/* ── Checklist Builder ── */}
+      <section className="doc-checklist-section">
         <div className="container">
-          <div className="section-heading">
-            <span>DEMONSTRATION</span>
-            <h2>Sample Documents</h2>
-            <p>
-              {language === "kn"
-                ? "ಪೋರ್ಟಲ್‌ನಲ್ಲಿ ನಾಗರಿಕ ದಾಖಲೆಗಳನ್ನು ಹೇಗೆ ತೋರಿಸಲಾಗುತ್ತದೆ ಎಂಬುದನ್ನು ವಿವರಿಸುವ ಮಾದರಿ ದಾಖಲೆಗಳು."
-                : language === "hi"
-                ? "पोर्टल पर नागरिक दस्तावेज़ कैसे दर्शाए जाते हैं, यह दिखाने वाले नमूना दस्तावेज़।"
-                : "Sample documents showing how citizen documents may be represented inside this demonstration portal."}
-            </p>
+          <div className="doc-checklist-card">
+
+            <div className="doc-checklist-header">
+              <span>✅</span>
+              <div>
+                <h2>Pre-Application Checklist</h2>
+                <p>Verify you have these ready before starting any scheme application.</p>
+              </div>
+            </div>
+
+            <div className="checklist-grid">
+              {[
+                { label: "Valid photo identity proof (Aadhaar / Voter ID)", note: "Must not be expired. Name must match exactly." },
+                { label: "Income / financial eligibility document", note: "Usually valid for 1 year from date of issue." },
+                { label: "Proof of residence in the scheme's applicable state/district", note: "Utility bill or domicile certificate." },
+                { label: "Recent passport-size colour photograph", note: "Plain background, full face, taken within 3 months." },
+                { label: "Bank account details (passbook / cancelled cheque)", note: "Required for DBT — account must be in applicant's name." },
+                { label: "Mobile number linked to Aadhaar", note: "Required for OTP-based verification on this portal." },
+              ].map((item, i) => (
+                <div key={i} className="checklist-item" data-testid={`checklist-item-${i}`}>
+                  <div className="checklist-checkbox" aria-hidden="true">☐</div>
+                  <div>
+                    <strong>{item.label}</strong>
+                    <p>{item.note}</p>
+                  </div>
+                </div>
+              ))}
+            </div>
+
           </div>
+        </div>
+      </section>
 
-          <div className="mock-document-grid">
-            <Link to="/documents/mock/identity" className="mock-document-card">
-              <div className="mock-preview identity-preview">ID</div>
-              <div>
-                <span>SAMPLE</span>
-                <h3>{language === "kn" ? "ಗುರುತಿನ ದಾಖಲೆ" : language === "hi" ? "पहचान दस्तावेज़" : "Identity Document"}</h3>
-                <p>{language === "kn" ? "ಪ್ರಾತ್ಯಕ್ಷಿಕೆಗಾಗಿ ಕಾಲ್ಪನಿಕ ಗುರುತಿನ ದಾಖಲೆ." : language === "hi" ? "प्रदर्शन के लिए काल्पनिक पहचान दस्तावेज़।" : "Fictional identity document for demonstration."}</p>
-              </div>
-            </Link>
-
-            <Link to="/documents/mock/income" className="mock-document-card">
-              <div className="mock-preview income-preview">₹</div>
-              <div>
-                <span>SAMPLE</span>
-                <h3>{language === "kn" ? "ಆದಾಯ ಪ್ರಮಾಣಪತ್ರ" : language === "hi" ? "आय प्रमाण पत्र" : "Income Certificate"}</h3>
-                <p>{language === "kn" ? "ಪ್ರಾತ್ಯಕ್ಷಿಕೆಗಾಗಿ ಕಾಲ್ಪನಿಕ ಆದಾಯ ಪ್ರಮಾಣಪತ್ರ." : language === "hi" ? "प्रदर्शन के लिए काल्पनिक आय प्रमाण पत्र।" : "Fictional income certificate for demonstration."}</p>
-              </div>
-            </Link>
-
-            <Link to="/documents/mock/residence" className="mock-document-card">
-              <div className="mock-preview residence-preview">R</div>
-              <div>
-                <span>SAMPLE</span>
-                <h3>{language === "kn" ? "ವಾಸಸ್ಥಳ ಪ್ರಮಾಣಪತ್ರ" : language === "hi" ? "निवास प्रमाण पत्र" : "Residence Certificate"}</h3>
-                <p>{language === "kn" ? "ಪ್ರಾತ್ಯಕ್ಷಿಕೆಗಾಗಿ ಕಾಲ್ಪನಿಕ ವಾಸಸ್ಥಳ ಪ್ರಮಾಣಪತ್ರ." : language === "hi" ? "प्रदर्शन के लिए काल्पनिक निवास प्रमाण पत्र।" : "Fictional residence certificate for demonstration."}</p>
-              </div>
-            </Link>
-
-            <Link to="/documents/mock/bank" className="mock-document-card">
-              <div className="mock-preview bank-preview">B</div>
-              <div>
-                <span>SAMPLE</span>
-                <h3>{language === "kn" ? "ಬ್ಯಾಂಕ್ ದಾಖಲೆ" : language === "hi" ? "बैंक दस्तावेज़" : "Bank Document"}</h3>
-                <p>{language === "kn" ? "ಪ್ರಾತ್ಯಕ್ಷಿಕೆಗಾಗಿ ಕಾಲ್ಪನಿಕ ಬ್ಯಾಂಕ್ ದಾಖಲೆ." : language === "hi" ? "प्रदर्शन के लिए काल्पनिक बैंक दस्तावेज़।" : "Fictional bank document for demonstration."}</p>
-              </div>
-            </Link>
+      {/* ── Security Notice ── */}
+      <section className="doc-security-section">
+        <div className="container">
+          <div className="doc-security-notice">
+            <span className="security-icon">🔒</span>
+            <div>
+              <strong>Document Privacy &amp; Security</strong>
+              <p>
+                Documents uploaded through this portal are stored securely in the local
+                demonstration database and are accessible only to the verified citizen who
+                submitted them. Do not upload real government-issued identity documents to this
+                demo environment. This portal is for demonstration purposes only.
+              </p>
+            </div>
           </div>
         </div>
       </section>

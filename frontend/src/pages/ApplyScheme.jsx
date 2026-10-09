@@ -357,7 +357,7 @@ function ApplyScheme() {
       <div className="container">
 
         {/* Top Header Banner */}
-        <div className="apply-header-banner">
+        <div className="apply-header-banner" data-testid="apply-header-banner">
           <div className="apply-header-info">
             <span className="apply-category-tag">{scheme.category}</span>
             <h1>{t("apply.pageTitle")} {scheme.title}</h1>
@@ -367,6 +367,7 @@ function ApplyScheme() {
             <button
               type="button"
               className="btn-blank-pdf"
+              data-testid="apply-download-blank-btn"
               onClick={handleDownloadBlank}
               disabled={downloadingBlank}
             >
@@ -377,23 +378,23 @@ function ApplyScheme() {
 
         {/* Stepper Progress Bar */}
         {step < 5 && (
-          <div className="stepper-container">
-            <div className={`step-item ${step === 1 ? "active" : step > 1 ? "completed" : ""}`}>
+          <div className="stepper-container" data-testid="apply-stepper">
+            <div className={`step-item ${step === 1 ? "active" : step > 1 ? "completed" : ""}`} data-testid="step-1-indicator">
               <div className="step-circle">{step > 1 ? "✓" : "1"}</div>
               <div className="step-label">{t("apply.step1")}</div>
             </div>
             <div className="step-line"></div>
-            <div className={`step-item ${step === 2 ? "active" : step > 2 ? "completed" : ""}`}>
+            <div className={`step-item ${step === 2 ? "active" : step > 2 ? "completed" : ""}`} data-testid="step-2-indicator">
               <div className="step-circle">{step > 2 ? "✓" : "2"}</div>
               <div className="step-label">{t("apply.step2")}</div>
             </div>
             <div className="step-line"></div>
-            <div className={`step-item ${step === 3 ? "active" : step > 3 ? "completed" : ""}`}>
+            <div className={`step-item ${step === 3 ? "active" : step > 3 ? "completed" : ""}`} data-testid="step-3-indicator">
               <div className="step-circle">{step > 3 ? "✓" : "3"}</div>
               <div className="step-label">{t("apply.step3")}</div>
             </div>
             <div className="step-line"></div>
-            <div className={`step-item ${step === 4 ? "active" : step > 4 ? "completed" : ""}`}>
+            <div className={`step-item ${step === 4 ? "active" : step > 4 ? "completed" : ""}`} data-testid="step-4-indicator">
               <div className="step-circle">{step > 4 ? "✓" : "4"}</div>
               <div className="step-label">{t("apply.step4")}</div>
             </div>
@@ -402,7 +403,7 @@ function ApplyScheme() {
 
         {/* Global Error Banner */}
         {error && (
-          <div className="alert-error" role="alert">
+          <div className="alert-error" role="alert" data-testid="apply-error-banner">
             <span>⚠</span> {error}
           </div>
         )}
@@ -431,35 +432,44 @@ function ApplyScheme() {
                 </div>
 
                 <div className="info-box">
-                  <label>{t("apply.fullName")}</label>
+                  <label htmlFor="apply-full-name">{t("apply.fullName")}</label>
                   <input
+                    id="apply-full-name"
                     type="text"
+                    data-testid="apply-full-name-input"
                     value={formData.full_name || citizen.full_name || ""}
                     onChange={(e) => handleInputChange("full_name", e.target.value)}
                     placeholder={t("apply.fullNamePlaceholder")}
                     className="form-input"
+                    aria-label={t("apply.fullName")}
                   />
                 </div>
 
                 <div className="info-box">
-                  <label>{t("apply.email")}</label>
+                  <label htmlFor="apply-email">{t("apply.email")}</label>
                   <input
+                    id="apply-email"
                     type="email"
+                    data-testid="apply-email-input"
                     value={formData.email || citizen.email || ""}
                     onChange={(e) => handleInputChange("email", e.target.value)}
                     placeholder={t("apply.emailPlaceholder")}
                     className="form-input"
+                    aria-label={t("apply.email")}
                   />
                 </div>
 
                 <div className="info-box full-width">
-                  <label>{t("apply.address")}</label>
+                  <label htmlFor="apply-address">{t("apply.address")}</label>
                   <textarea
+                    id="apply-address"
                     rows={3}
+                    data-testid="apply-address-input"
                     value={formData.address || citizen.address || ""}
                     onChange={(e) => handleInputChange("address", e.target.value)}
                     placeholder={t("apply.addressPlaceholder")}
                     className="form-textarea"
+                    aria-label={t("apply.address")}
                   />
                 </div>
               </div>
@@ -474,10 +484,10 @@ function ApplyScheme() {
               </div>
 
               <div className="form-buttons-row">
-                <Link to={`/schemes/${scheme.id}`} className="btn-secondary">
+                <Link to={`/schemes/${scheme.id}`} className="btn-secondary" data-testid="apply-step1-cancel-btn">
                   {t("apply.cancel")}
                 </Link>
-                <button type="button" className="btn-primary" onClick={handleNextStep}>
+                <button type="button" className="btn-primary" data-testid="apply-step1-next-btn" onClick={handleNextStep}>
                   {t("apply.nextSchemeDetails")}
                 </button>
               </div>
@@ -519,9 +529,13 @@ function ApplyScheme() {
                         {/* SELECT */}
                         {field.type === "select" && (
                           <select
+                            id={`field-${field.name}`}
                             className={`form-select ${hasError ? "input-err" : ""}`}
+                            data-testid={`apply-field-${field.name}`}
                             value={fieldVal}
                             onChange={(e) => handleInputChange(field.name, e.target.value)}
+                            aria-label={field.label || field.name}
+                            aria-required={field.required}
                           >
                             <option value="">{t("apply.selectOption")}</option>
                             {field.options && field.options.map((opt) => (
@@ -532,13 +546,14 @@ function ApplyScheme() {
 
                         {/* RADIO */}
                         {field.type === "radio" && (
-                          <div className="radio-group">
+                          <div className="radio-group" role="radiogroup" aria-label={field.label || field.name}>
                             {field.options && field.options.map((opt) => (
                               <label key={opt} className="radio-option">
                                 <input
                                   type="radio"
                                   name={field.name}
                                   value={opt}
+                                  data-testid={`apply-field-${field.name}-${opt}`}
                                   checked={fieldVal === opt}
                                   onChange={() => handleInputChange(field.name, opt)}
                                 />
@@ -553,8 +568,10 @@ function ApplyScheme() {
                           <label className="checkbox-option">
                             <input
                               type="checkbox"
+                              data-testid={`apply-field-${field.name}`}
                               checked={!!fieldVal}
                               onChange={(e) => handleInputChange(field.name, e.target.checked)}
+                              aria-label={field.label}
                             />
                             <span>{field.label}</span>
                           </label>
@@ -563,22 +580,30 @@ function ApplyScheme() {
                         {/* TEXTAREA */}
                         {field.type === "textarea" && (
                           <textarea
+                            id={`field-${field.name}`}
                             rows={3}
+                            data-testid={`apply-field-${field.name}`}
                             className={`form-textarea ${hasError ? "input-err" : ""}`}
                             placeholder={field.placeholder || ""}
                             value={fieldVal}
                             onChange={(e) => handleInputChange(field.name, e.target.value)}
+                            aria-label={field.label || field.name}
+                            aria-required={field.required}
                           />
                         )}
 
                         {/* INPUT TYPES (text, number, date, tel, email) */}
                         {["text", "number", "date", "tel", "email"].includes(field.type) && (
                           <input
+                            id={`field-${field.name}`}
                             type={field.type}
+                            data-testid={`apply-field-${field.name}`}
                             className={`form-input ${hasError ? "input-err" : ""}`}
                             placeholder={field.placeholder || ""}
                             value={fieldVal}
                             onChange={(e) => handleInputChange(field.name, e.target.value)}
+                            aria-label={field.label || field.name}
+                            aria-required={field.required}
                           />
                         )}
 
@@ -596,10 +621,10 @@ function ApplyScheme() {
               </div>
 
               <div className="form-buttons-row">
-                <button type="button" className="btn-secondary" onClick={handlePrevStep}>
+                <button type="button" className="btn-secondary" data-testid="apply-step2-back-btn" onClick={handlePrevStep}>
                   {t("apply.backApplicant")}
                 </button>
-                <button type="button" className="btn-primary" onClick={handleNextStep}>
+                <button type="button" className="btn-primary" data-testid="apply-step2-next-btn" onClick={handleNextStep}>
                   {t("apply.nextDocuments")}
                 </button>
               </div>
@@ -624,7 +649,9 @@ function ApplyScheme() {
                   const isUploading = !!uploadingDoc[doc.canonicalName];
 
                   return (
-                    <div key={doc.canonicalName} className={`doc-upload-card ${uploaded ? "uploaded" : ""}`}>
+                    <div key={doc.canonicalName} className={`doc-upload-card ${uploaded ? "uploaded" : ""}`}
+                      data-testid={`doc-upload-card-${doc.canonicalName.replace(/\s+/g, "-").toLowerCase()}`}
+                    >
                       <div className="doc-card-info">
                         <div className="doc-title-row">
                           <span className="doc-icon">{uploaded ? "📄" : "📁"}</span>
@@ -655,21 +682,27 @@ function ApplyScheme() {
                           <div className="uploading-spinner">{t("common.loading")}</div>
                         ) : uploaded ? (
                           <div className="uploaded-actions">
-                            <span className="upload-success-badge">{t("apply.uploaded")}</span>
+                            <span className="upload-success-badge" data-testid={`doc-uploaded-badge-${doc.canonicalName.replace(/\s+/g, "-").toLowerCase()}`}>{t("apply.uploaded")}</span>
                             <button
                               type="button"
                               className="btn-remove-doc"
+                              data-testid={`doc-remove-btn-${doc.canonicalName.replace(/\s+/g, "-").toLowerCase()}`}
                               onClick={() => handleRemoveDoc(doc.canonicalName, doc.localizedName)}
                             >
                               {t("apply.replaceRemove")}
                             </button>
                           </div>
                         ) : (
-                          <label className="btn-upload-label">
+                          <label
+                            className="btn-upload-label"
+                            data-testid={`doc-upload-label-${doc.canonicalName.replace(/\s+/g, "-").toLowerCase()}`}
+                          >
                             {t("apply.uploadFile")}
                             <input
                               type="file"
                               accept=".pdf,.jpg,.jpeg,.png"
+                              aria-label={`Upload ${doc.localizedName}`}
+                              data-testid={`doc-file-input-${doc.canonicalName.replace(/\s+/g, "-").toLowerCase()}`}
                               style={{ display: "none" }}
                               onChange={(e) => {
                                 if (e.target.files && e.target.files[0]) {
@@ -686,10 +719,10 @@ function ApplyScheme() {
               </div>
 
               <div className="form-buttons-row">
-                <button type="button" className="btn-secondary" onClick={handlePrevStep}>
+                <button type="button" className="btn-secondary" data-testid="apply-step3-back-btn" onClick={handlePrevStep}>
                   {t("apply.backSchemeDetails")}
                 </button>
-                <button type="button" className="btn-primary" onClick={handleNextStep}>
+                <button type="button" className="btn-primary" data-testid="apply-step3-next-btn" onClick={handleNextStep}>
                   {t("apply.nextReview")}
                 </button>
               </div>
@@ -787,8 +820,11 @@ function ApplyScheme() {
                 <label className="declaration-label">
                   <input
                     type="checkbox"
+                    id="apply-declaration-consent"
+                    data-testid="apply-declaration-checkbox"
                     checked={!!formData.declaration_consent}
                     onChange={(e) => handleInputChange("declaration_consent", e.target.checked)}
+                    aria-label="Statutory declaration consent"
                   />
                   <span>
                     <strong>{t("apply.statutoryDeclaration")}</strong> {t("apply.declarationText")}
@@ -797,14 +833,16 @@ function ApplyScheme() {
               </div>
 
               <div className="form-buttons-row">
-                <button type="button" className="btn-secondary" onClick={handlePrevStep}>
+                <button type="button" className="btn-secondary" data-testid="apply-step4-back-btn" onClick={handlePrevStep}>
                   {t("apply.backDocs")}
                 </button>
                 <button
                   type="button"
                   className="btn-submit"
+                  data-testid="apply-submit-btn"
                   disabled={submitting || !formData.declaration_consent}
                   onClick={handleSubmitApplication}
+                  aria-disabled={submitting || !formData.declaration_consent}
                 >
                   {submitting ? t("apply.submittingButton") : t("apply.submitButton")}
                 </button>
@@ -824,11 +862,11 @@ function ApplyScheme() {
               </p>
 
               {/* Application Reference Banner */}
-              <div className="app-ref-card">
+              <div className="app-ref-card" data-testid="apply-confirmation-ref-card">
                 <span className="ref-title">{t("apply.referenceNumber")}</span>
                 <div className="ref-number-row">
-                  <span className="ref-code">{application.application_number}</span>
-                  <button type="button" className="btn-copy" onClick={handleCopyAppNo}>
+                  <span className="ref-code" data-testid="apply-confirmation-app-number">{application.application_number}</span>
+                  <button type="button" className="btn-copy" data-testid="apply-copy-app-number-btn" onClick={handleCopyAppNo}>
                     {copiedAppNo ? t("apply.copied") : t("apply.copy")}
                   </button>
                 </div>
@@ -866,6 +904,7 @@ function ApplyScheme() {
                 <button
                   type="button"
                   className="btn-download-pdf"
+                  data-testid="apply-confirmation-download-pdf-btn"
                   onClick={handleDownloadPdf}
                   disabled={downloadingPdf}
                 >
@@ -875,6 +914,7 @@ function ApplyScheme() {
                 <button
                   type="button"
                   className="btn-view-app"
+                  data-testid="apply-confirmation-track-btn"
                   onClick={() => navigate(`/my-applications/${application.application_number}`)}
                 >
                   {t("apply.trackStatusButton")}
@@ -883,6 +923,7 @@ function ApplyScheme() {
                 <button
                   type="button"
                   className="btn-back-services"
+                  data-testid="apply-confirmation-return-btn"
                   onClick={() => navigate("/my-services")}
                 >
                   {t("apply.returnMyServices")}
