@@ -1,61 +1,90 @@
+/* ============================================================
+   Footer — Government Portal Style
+   ============================================================ */
+
+.footer-disclaimer-banner {
+  background: #1a2535;
+  color: rgba(255,255,255,.75);
+  font-size: 12.5px;
+  padding: 10px 0;
+  text-align: center;
+  border-bottom: 2px solid #e67e22;
+}
+
+.footer-disclaimer-banner strong {
+  color: #f59e0b;
+}
+
 .footer {
-  margin-top: 60px;
-  background: #172333;
-  color: #e5e7eb;
+  background: #0f1e32;
+  color: rgba(255,255,255,.8);
+  margin-top: auto;
 }
 
 .footer-grid {
-  padding: 45px 0;
   display: grid;
-  grid-template-columns: 2fr 1fr 1fr;
-  gap: 50px;
+  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+  gap: 32px;
+  padding: 48px 0 32px;
+  border-bottom: 1px solid rgba(255,255,255,.08);
 }
 
-.footer h3 {
-  margin-top: 0;
+.footer-column h3 {
   color: white;
-  font-size: 20px;
+  font-size: 13px;
+  font-weight: 700;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  margin-bottom: 14px;
+  padding-bottom: 8px;
+  border-bottom: 2px solid #e67e22;
+  display: inline-block;
 }
 
-.footer h4 {
-  color: white;
-  margin-top: 0;
-}
-
-.footer p {
-  color: #c4ccd7;
-  line-height: 1.7;
-  font-size: 14px;
-}
-
-.footer a {
+.footer-column a {
   display: block;
-  color: #cbd5e1;
+  color: rgba(255,255,255,.65);
   text-decoration: none;
-  margin-bottom: 10px;
-  font-size: 14px;
+  font-size: 13.5px;
+  padding: 4px 0;
+  transition: color 0.15s;
 }
 
-.footer a:hover {
+.footer-column a:hover {
   color: white;
-  text-decoration: underline;
+}
+
+.footer-column p {
+  color: rgba(255,255,255,.6);
+  font-size: 13px;
+  line-height: 1.65;
+  margin: 0 0 8px;
+}
+
+.footer-notice {
+  font-size: 12.5px !important;
+  color: rgba(255,255,255,.45) !important;
+  font-style: italic;
 }
 
 .footer-bottom {
-  border-top: 1px solid #334155;
-  padding: 18px 0;
+  padding: 20px 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
 }
 
 .footer-bottom p {
-  margin: 4px 0;
-  font-size: 12px;
+  margin: 0;
+  color: rgba(255,255,255,.4);
+  font-size: 12.5px;
+  text-align: center;
 }
 
-@media (max-width: 700px) {
-
+@media (max-width: 640px) {
   .footer-grid {
-    grid-template-columns: 1fr;
-    gap: 25px;
+    grid-template-columns: 1fr 1fr;
+    gap: 24px;
+    padding: 32px 0 24px;
   }
-
 }

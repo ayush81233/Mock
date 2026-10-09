@@ -150,6 +150,7 @@ function MyServices() {
           <div className="header-actions-group">
             <button
               type="button"
+              data-testid="notifications-button"
               className="notification-bell-btn"
               onClick={() => setShowNotesDrawer(!showNotesDrawer)}
             >
@@ -159,7 +160,7 @@ function MyServices() {
               )}
             </button>
 
-            <button className="logout-button" onClick={handleLogout}>
+            <button data-testid="sign-out-button" className="logout-button" onClick={handleLogout}>
               {t("myServices.signOut")}
             </button>
           </div>
@@ -272,10 +273,10 @@ function MyServices() {
                 const translatedStatus = t(`status.${app.status}`, app.status);
 
                 return (
-                  <div key={app.id} className="app-card">
+                  <div key={app.id} className="app-card" data-testid="application-card">
                     <div className="app-card-top">
                       <span className="app-card-cat">{app.scheme_category}</span>
-                      <span className={`status-pill-small status-${app.status.toLowerCase()}`}>
+                      <span data-testid="application-status-badge" className={`status-pill-small status-${app.status.toLowerCase()}`}>
                         {translatedStatus}
                       </span>
                     </div>
@@ -313,6 +314,7 @@ function MyServices() {
                       <Link
                         to={`/my-applications/${app.application_number}`}
                         className="btn-view-application"
+                        data-testid={`view-application-${app.application_number}`}
                       >
                         {t("myServices.viewAppDetails")}
                       </Link>

@@ -130,3 +130,77 @@ class NotificationSerializer(serializers.ModelSerializer):
             "type",
             "created_at",
         ]
+
+
+# ---------------------------------------------------------------
+# PHASE 4 — Minimal read-only status serializer for agent access
+# ---------------------------------------------------------------
+
+_STATUS_NEXT_STEP = {
+    "DRAFT": "Complete your application form and upload the required documents, then submit.",
+    "SUBMITTED": "Your application has been received and is awaiting review. No action needed.",
+    "UNDER_REVIEW": (
+        "Your application is under departmental review. "
+        "You will be notified of any updates."
+    ),
+    "CORRECTION_REQUIRED": (
+        "Additional information or corrected documents are required. "
+        "Please log in and update your application."
+    ),
+    "APPROVED": (
+        "Your application has been approved. "
+        "Benefits will be processed by the responsible department."
+    ),
+    "REJECTED": (
+        "Your application was not approved. "
+        "Please contact the relevant authority for further guidance."
+    ),
+}
+
+
+class ApplicationStatusSerializer(serializers.ModelSerializer):
+    """
+    Minimal read-only serializer exposing only status-tracking fields.
+
+    Does NOT expose: form_data, citizen PII, documents, Aadhaar, bank
+    information, OTPs, internal notes, or any other sensitive personal data.
+
+    Intended for:
+      - Citizen self-service status tracking (authenticated via Token).
+      - Future Phase 4 agent integration (requires separate service auth;
+        see README for instructions).
+    """
+
+    scheme_title = serializers.CharField(source="scheme.title", read_only=True)
+    scheme_id = serializers.CharField(source="scheme.id", read_only=True)
+    status_label = serializers.SerializerMethodField()
+    next_step = serializers.SerializerMethodField()
+
+    class Meta:
+        model = Application
+        fields = [
+            "application_number",
+            "scheme_id",
+            "scheme_title",
+            "status",
+            "status_label",
+            "submitted_at",
+            "updated_at",
+            "next_step",
+        ]
+        read_only_fields = [
+            "application_number",
+            "scheme_id",
+            "scheme_title",
+            "status",
+            "status_label",
+            "submitted_at",
+            "updated_at",
+            "next_step",
+        ]
+
+    def get_status_label(self, obj):
+        return dict(Application.STATUS_CHOICES).get(obj.status, obj.status)
+
+    def get_next_step(self, obj):
+        return _STATUS_NEXT_STEP.get(obj.status, "")

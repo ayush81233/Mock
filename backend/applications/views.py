@@ -23,8 +23,10 @@ from .pdf_generator import generate_application_pdf, generate_blank_form_pdf
 from .serializers import (
     ApplicationSerializer,
     ApplicationDocumentSerializer,
+    ApplicationStatusSerializer,
     NotificationSerializer,
 )
+
 
 # Allowed upload extensions and MIME types
 ALLOWED_EXTENSIONS = {".pdf", ".jpg", ".jpeg", ".png"}
@@ -608,3 +610,61 @@ def demo_verify_all_documents(request, application_number):
         "message": "All application documents successfully verified (Demo Review).",
         "application": serializer.data
     })
+
+
+# =========================================================
+# PHASE 4 — READ-ONLY APPLICATION STATUS ENDPOINT
+# =========================================================
+
+@api_view(["GET"])
+@authentication_classes([TokenAuthentication])
+@permission_classes([IsAuthenticated])
+def application_status(request, application_number):
+    """
+    GET /api/applications/<application_number>/status/
+
+    Read-only endpoint returning minimal status information for an
+    authenticated citizen's own application.
+
+    Security:
+    - Requires a valid citizen Token (same authentication as all other
+      citizen endpoints).
+    - Enforces owner-only access: citizens may only query their own
+      applications. A non-existent application or one belonging to
+      another citizen returns 404, not 403, to avoid leaking existence.
+    - Returns only: application_number, scheme info, status, status label,
+      submission date, last-update date, and a next-step hint.
+    - Does NOT return: form_data, documents, Aadhaar numbers, bank
+      information, citizen phone number, or any internal notes.
+
+    Future Phase 4 (AI agent) integration:
+    - An external agent MUST authenticate as an individual citizen (Token
+      per citizen) or via a separately configured service-account mechanism
+      described in the README.
+    - A shared demo key that bypasses ownership checks must NOT be used.
+    - Rate limiting should be implemented at the reverse-proxy layer before
+      exposing this endpoint publicly.
+    """
+    try:
+        citizen = request.user.citizen_profile
+    except Exception:
+        return Response(
+            {"error": "Citizen profile not found."},
+            status=status.HTTP_400_BAD_REQUEST
+        )
+
+    # Return 404 for both "not found" and "belongs to another citizen" to
+    # avoid leaking the existence of other citizens' applications.
+    try:
+        application = Application.objects.select_related("scheme").get(
+            application_number=application_number,
+            citizen=citizen
+        )
+    except Application.DoesNotExist:
+        return Response(
+            {"error": "Application not found."},
+            status=status.HTTP_404_NOT_FOUND
+        )
+
+    serializer = ApplicationStatusSerializer(application)
+    return Response(serializer.data)

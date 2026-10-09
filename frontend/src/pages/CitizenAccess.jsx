@@ -184,6 +184,7 @@ function CitizenAccess() {
 
               <input
                 id="mobile"
+                data-testid="otp-mobile-input"
                 type="tel"
                 inputMode="numeric"
                 autoComplete="tel"
@@ -201,6 +202,7 @@ function CitizenAccess() {
 
             <button
               type="submit"
+              data-testid="otp-send-button"
               className="citizen-primary-button"
               disabled={loading}
             >
@@ -245,6 +247,7 @@ function CitizenAccess() {
 
             <input
               id="otp"
+              data-testid="otp-code-input"
               type="text"
               inputMode="numeric"
               autoComplete="one-time-code"
@@ -261,6 +264,7 @@ function CitizenAccess() {
 
             <button
               type="submit"
+              data-testid="otp-submit-button"
               className="citizen-primary-button"
               disabled={loading}
             >
@@ -274,6 +278,7 @@ function CitizenAccess() {
 
               <button
                 type="button"
+                data-testid="otp-resend-button"
                 className="text-button"
                 onClick={handleResendOTP}
                 disabled={loading}
@@ -283,6 +288,7 @@ function CitizenAccess() {
 
               <button
                 type="button"
+                data-testid="otp-change-number-button"
                 className="text-button"
                 onClick={handleChangeNumber}
                 disabled={loading}
@@ -301,6 +307,7 @@ function CitizenAccess() {
 
         {error && (
           <div
+            data-testid="otp-error-message"
             className="citizen-error"
             role="alert"
           >
@@ -314,6 +321,7 @@ function CitizenAccess() {
 
         {success && (
           <div
+            data-testid="otp-success-message"
             className="citizen-success"
             role="status"
           >

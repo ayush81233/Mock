@@ -4,6 +4,7 @@ from .views import (
     create_application,
     my_applications,
     application_detail,
+    application_status,
     submit_application,
     application_documents,
     delete_document,
@@ -17,6 +18,8 @@ from .views import (
 urlpatterns = [
     path("", create_application),
     path("mine/", my_applications),
+    # Status endpoint must appear BEFORE the generic <application_number>/ catch-all
+    path("<str:application_number>/status/", application_status),
     path("<str:application_number>/", application_detail),
     path("<str:application_number>/submit/", submit_application),
     path("<str:application_number>/documents/", application_documents),

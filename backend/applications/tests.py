@@ -269,3 +269,135 @@ class ApplicationWorkflowTests(TestCase):
 
         cross_doc_res = self.client.get(f"/api/applications/{app.application_number}/documents/{doc.id}/download/")
         self.assertEqual(cross_doc_res.status_code, status.HTTP_404_NOT_FOUND)
+
+
+# =========================================================
+# PHASE 4 — Application Status Endpoint Tests
+# =========================================================
+
+class ApplicationStatusEndpointTests(TestCase):
+    """
+    Tests for GET /api/applications/<application_number>/status/
+
+    Covers:
+    - Authenticated citizen retrieving their own application status.
+    - Safe fields only (no PII, no form_data in response).
+    - Unauthenticated request returns 401.
+    - Non-existent application returns 404.
+    - Cross-citizen access returns 404 (not 403, to avoid leaking existence).
+    - Response shape and status_label / next_step fields are present.
+    """
+
+    def setUp(self):
+        self.client = APIClient()
+
+        self.scheme = Scheme.objects.create(
+            id="pension-001",
+            category="Pension",
+            title="Senior Citizen Pension Scheme",
+            short_description="Monthly pension for senior citizens.",
+            description="Full description.",
+            eligibility=["Age 60+", "Resident of Karnataka"],
+            documents=["Identity Proof", "Age Proof"],
+            application_fields=[
+                {"name": "full_name", "label": "Full Name", "type": "text", "required": True},
+            ]
+        )
+
+        # Citizen A — owns the application
+        self.user_a = User.objects.create(username="citizen_status_a")
+        self.citizen_a = Citizen.objects.create(
+            user=self.user_a, mobile="9000000001", full_name="Status Citizen A", is_verified=True
+        )
+        self.token_a = Token.objects.create(user=self.user_a)
+
+        # Citizen B — unrelated citizen
+        self.user_b = User.objects.create(username="citizen_status_b")
+        self.citizen_b = Citizen.objects.create(
+            user=self.user_b, mobile="9000000002", full_name="Status Citizen B", is_verified=True
+        )
+        self.token_b = Token.objects.create(user=self.user_b)
+
+        # Application belonging to Citizen A
+        self.app = Application.objects.create(
+            citizen=self.citizen_a,
+            scheme=self.scheme,
+            status="SUBMITTED",
+            form_data={"full_name": "Status Citizen A", "aadhaar": "1234-5678-9012"},
+        )
+
+    def _url(self, app_number=None):
+        number = app_number or self.app.application_number
+        return f"/api/applications/{number}/status/"
+
+    def test_citizen_can_retrieve_own_application_status(self):
+        """Authenticated owner receives status with safe fields only."""
+        self.client.credentials(HTTP_AUTHORIZATION=f"Token {self.token_a.key}")
+        res = self.client.get(self._url())
+
+        self.assertEqual(res.status_code, status.HTTP_200_OK)
+
+        data = res.data
+        self.assertEqual(data["application_number"], self.app.application_number)
+        self.assertEqual(data["status"], "SUBMITTED")
+        self.assertIn("status_label", data)
+        self.assertIn("next_step", data)
+        self.assertEqual(data["scheme_title"], "Senior Citizen Pension Scheme")
+
+    def test_response_does_not_expose_sensitive_fields(self):
+        """Status response must NOT include form_data, citizen PII, or documents."""
+        self.client.credentials(HTTP_AUTHORIZATION=f"Token {self.token_a.key}")
+        res = self.client.get(self._url())
+
+        self.assertEqual(res.status_code, status.HTTP_200_OK)
+        data = res.data
+
+        # Explicitly assert that sensitive keys are absent
+        self.assertNotIn("form_data", data)
+        self.assertNotIn("citizen", data)
+        self.assertNotIn("documents", data)
+        self.assertNotIn("id", data)    # internal UUID should not be exposed
+
+    def test_unauthenticated_request_returns_401(self):
+        """Request without authentication token must be rejected."""
+        self.client.credentials()  # clear credentials
+        res = self.client.get(self._url())
+        self.assertEqual(res.status_code, status.HTTP_401_UNAUTHORIZED)
+
+    def test_nonexistent_application_returns_404(self):
+        """A request for an application number that does not exist returns 404."""
+        self.client.credentials(HTTP_AUTHORIZATION=f"Token {self.token_a.key}")
+        res = self.client.get(self._url("YJS-DOESNOTEXIST"))
+        self.assertEqual(res.status_code, status.HTTP_404_NOT_FOUND)
+
+    def test_cross_citizen_access_returns_404(self):
+        """
+        Citizen B must not be able to retrieve Citizen A's application status.
+        Must return 404 (not 403) to avoid confirming that the application
+        exists under a different citizen.
+        """
+        self.client.credentials(HTTP_AUTHORIZATION=f"Token {self.token_b.key}")
+        res = self.client.get(self._url())
+        self.assertEqual(res.status_code, status.HTTP_404_NOT_FOUND)
+
+    def test_status_label_and_next_step_are_populated(self):
+        """status_label and next_step must be non-empty strings for every real status."""
+        self.client.credentials(HTTP_AUTHORIZATION=f"Token {self.token_a.key}")
+
+        for status_value, expected_label in [
+            ("DRAFT", "Draft"),
+            ("SUBMITTED", "Submitted"),
+            ("UNDER_REVIEW", "Under Review"),
+            ("APPROVED", "Approved"),
+            ("REJECTED", "Rejected"),
+            ("CORRECTION_REQUIRED", "Correction Required"),
+        ]:
+            self.app.status = status_value
+            self.app.save(update_fields=["status"])
+
+            res = self.client.get(self._url())
+            self.assertEqual(res.status_code, status.HTTP_200_OK)
+            self.assertEqual(res.data["status_label"], expected_label)
+            self.assertIsInstance(res.data["next_step"], str)
+            self.assertGreater(len(res.data["next_step"]), 0)
+

@@ -1,4 +1,4 @@
-const API_BASE_URL = "http://127.0.0.1:8000/api";
+const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || "/api";
 
 
 /* =========================
@@ -664,6 +664,37 @@ export async function demoVerifyDocument(
 
   if (!response.ok) {
     throw new Error(data.error || "Unable to verify document.");
+  }
+
+  return data;
+}
+
+
+/* =========================
+   APPLICATION STATUS (Phase 4)
+   ========================= */
+
+export async function getApplicationStatus(applicationNumber) {
+  const token = getCitizenToken();
+
+  if (!token) {
+    throw new Error("Citizen authentication is required.");
+  }
+
+  const response = await fetch(
+    `${API_BASE_URL}/applications/${applicationNumber}/status/`,
+    {
+      method: "GET",
+      headers: {
+        Authorization: `Token ${token}`,
+      },
+    }
+  );
+
+  const data = await response.json();
+
+  if (!response.ok) {
+    throw new Error(data.error || "Unable to fetch application status.");
   }
 
   return data;

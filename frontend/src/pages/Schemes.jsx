@@ -67,7 +67,7 @@ function Schemes() {
           {schemes.map((scheme) => {
             const loc = getLocalizedScheme(scheme);
             return (
-              <article className="scheme-card" key={loc.id}>
+              <article className="scheme-card" key={loc.id} data-testid="scheme-card">
 
                 <span className="scheme-category">
                   {loc.category}
@@ -80,6 +80,7 @@ function Schemes() {
                 <Link
                   to={`/schemes/${loc.id}`}
                   className="scheme-button"
+                  data-testid={`scheme-view-details-${loc.id}`}
                 >
                   {t("home.viewDetails")}
                 </Link>

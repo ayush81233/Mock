@@ -1,162 +1,129 @@
-.gov-topbar {
-  background: #1f2937;
-  color: white;
-  font-size: 13px;
+/* ============================================================
+   Header — Government Portal Style
+   ============================================================ */
+
+/* ── Demo Disclaimer Bar ── */
+.demo-disclaimer-bar {
+  background: #fffbeb;
+  border-bottom: 2px solid #f59e0b;
+  padding: 7px 16px;
+  text-align: center;
+  font-size: 12.5px;
+  color: #78350f;
+  font-weight: 500;
+  letter-spacing: 0.02em;
 }
 
-.container {
-  width: min(1200px, 92%);
-  margin: 0 auto;
+/* ── Utility Topbar ── */
+.gov-topbar {
+  background: #1a2535;
+  color: rgba(255,255,255,.85);
+  font-size: 12.5px;
 }
 
 .gov-topbar-inner {
-  min-height: 38px;
+  min-height: 36px;
   display: flex;
   align-items: center;
   justify-content: space-between;
-  gap: 20px;
+  gap: 16px;
 }
 
 .topbar-right {
   display: flex;
   align-items: center;
-  gap: 6px;
+  gap: 4px;
+}
+
+.skip-link {
+  position: absolute;
+  left: -9999px;
+  top: auto;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  color: white;
+  text-decoration: none;
+}
+
+.skip-link:focus {
+  position: static;
+  width: auto;
+  height: auto;
+  background: #1a2535;
+  padding: 4px 10px;
+  border-radius: 3px;
 }
 
 .topbar-right button {
-  border: 1px solid #6b7280;
+  border: 1px solid rgba(255,255,255,.25);
   background: transparent;
-  color: white;
-  padding: 5px 9px;
+  color: rgba(255,255,255,.85);
+  padding: 3px 8px;
   border-radius: 3px;
   cursor: pointer;
   font-size: 12px;
+  transition: background 0.15s;
 }
 
 .topbar-right button:hover {
-  background: #374151;
+  background: rgba(255,255,255,.12);
 }
 
-
-/* Branding */
-
+/* ── Branding ── */
 .branding {
   background: white;
-  border-bottom: 1px solid #e5e7eb;
+  border-bottom: 1px solid #e2e8f0;
 }
 
 .branding-inner {
-  min-height: 105px;
+  min-height: 88px;
   display: flex;
   align-items: center;
   justify-content: space-between;
-  gap: 30px;
+  gap: 24px;
+  padding: 10px 0;
 }
 
 .brand {
   display: flex;
   align-items: center;
-  gap: 16px;
+  gap: 14px;
   text-decoration: none;
   color: inherit;
 }
 
 .emblem-placeholder {
-  width: 62px;
-  height: 62px;
-  border: 1px solid #d1d5db;
+  width: 58px;
+  height: 58px;
+  border: 1px solid #e2e8f0;
   border-radius: 50%;
   display: flex;
   align-items: center;
   justify-content: center;
-  font-size: 31px;
+  font-size: 29px;
+  flex-shrink: 0;
 }
 
 .brand-title {
-  font-size: 25px;
+  font-size: 22px;
   font-weight: 700;
-  color: #18212f;
+  color: #0f3460;
+  line-height: 1.2;
 }
 
 .brand-subtitle {
-  margin-top: 4px;
-  color: #5b6472;
-  font-size: 14px;
+  margin-top: 3px;
+  color: #566070;
+  font-size: 13px;
 }
 
+/* ── Header Actions ── */
 .header-actions {
   display: flex;
   align-items: center;
-  gap: 10px;
-}
-
-.header-actions label {
-  font-size: 13px;
-  color: #4b5563;
-}
-
-.header-actions select {
-  padding: 8px 10px;
-  border: 1px solid #cbd5e1;
-  border-radius: 4px;
-  background: white;
-}
-
-.accessibility-button {
-  border: 1px solid #9ca3af;
-  background: white;
-  padding: 8px 12px;
-  border-radius: 4px;
-  cursor: pointer;
-}
-
-
-/* Navigation */
-
-.main-nav {
-  background: #123b6d;
-  border-bottom: 4px solid #e5a400;
-}
-
-.nav-inner {
-  display: flex;
-  align-items: center;
-}
-
-.nav-inner a {
-  color: white;
-  text-decoration: none;
-  padding: 15px 18px;
-  font-size: 14px;
-  font-weight: 600;
-  transition: background 0.2s ease;
-}
-
-.nav-inner a:hover {
-  background: #1c528f;
-}
-
-
-/* Mobile */
-
-@media (max-width: 800px) {
-
-  .gov-topbar-inner {
-    flex-direction: column;
-    align-items: flex-start;
-    padding: 8px 0;
-  }
-
-  .branding-inner {
-    flex-direction: column;
-    align-items: flex-start;
-    padding: 20px 0;
-  }
-
-  .header-actions {
-  display: flex;
-  align-items: center;
-  gap: 14px;
+  gap: 12px;
+  flex-wrap: wrap;
 }
 
 .language-control {
@@ -166,48 +133,126 @@
 }
 
 .language-control label {
-  font-size: 14px;
-  color: #4b5563;
+  font-size: 13px;
+  color: #566070;
+  white-space: nowrap;
 }
 
 .language-control select {
-  min-width: 125px;
-  height: 42px;
-  padding: 0 12px;
-  border: 1px solid #b8c2cf;
-  border-radius: 4px;
-  background: #ffffff;
-  color: #1f2937;
-  font-size: 14px;
-}
-
-.language-control select:focus {
-  outline: 2px solid #1f5b95;
-  outline-offset: 1px;
-}
-
-.accessibility-button {
-  height: 42px;
-  padding: 0 14px;
-  border: 1px solid #9ca3af;
+  min-width: 120px;
+  height: 38px;
+  padding: 0 10px;
+  border: 1.5px solid #cbd5e1;
   border-radius: 4px;
   background: white;
-  color: #263445;
-  font-size: 14px;
+  color: #1a2535;
+  font-size: 13.5px;
   cursor: pointer;
 }
 
-.accessibility-button:hover {
-  background: #f3f6f9;
+.language-control select:focus {
+  outline: 2px solid #0f3460;
+  outline-offset: 1px;
+  border-color: #0f3460;
 }
 
-  .nav-inner {
-    overflow-x: auto;
+/* ── Citizen Access Links (header) ── */
+.citizen-access-link,
+.citizen-dash-link {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 8px 14px;
+  background: #0f3460;
+  color: white;
+  border-radius: 4px;
+  font-size: 13px;
+  font-weight: 600;
+  text-decoration: none;
+  transition: background 0.15s;
+  white-space: nowrap;
+}
+
+.citizen-access-link:hover,
+.citizen-dash-link:hover {
+  background: #1a4a7a;
+}
+
+.citizen-header-controls {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.btn-logout-header {
+  padding: 7px 13px;
+  background: transparent;
+  color: #566070;
+  border: 1.5px solid #cbd5e1;
+  border-radius: 4px;
+  font-size: 12.5px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.15s;
+}
+
+.btn-logout-header:hover {
+  background: #fef2f2;
+  border-color: #f87171;
+  color: #991b1b;
+}
+
+/* ── Main Navigation ── */
+.main-nav {
+  background: #0f3460;
+  border-bottom: 3px solid #e67e22;
+}
+
+.nav-inner {
+  display: flex;
+  align-items: center;
+  overflow-x: auto;
+}
+
+.nav-inner a {
+  color: rgba(255,255,255,.88);
+  text-decoration: none;
+  padding: 13px 16px;
+  font-size: 13.5px;
+  font-weight: 500;
+  transition: background 0.15s, color 0.15s;
+  white-space: nowrap;
+}
+
+.nav-inner a:hover,
+.nav-inner a.active {
+  background: rgba(255,255,255,.1);
+  color: white;
+}
+
+/* ── Mobile ── */
+@media (max-width: 900px) {
+
+  .branding-inner {
+    flex-direction: column;
+    align-items: flex-start;
+    padding: 14px 0;
+    min-height: auto;
+    gap: 14px;
+  }
+
+  .header-actions {
     width: 100%;
   }
 
-  .nav-inner a {
-    white-space: nowrap;
+  .nav-inner {
+    width: 100%;
   }
 
+  .gov-topbar-inner {
+    flex-direction: column;
+    align-items: flex-start;
+    padding: 6px 0;
+    gap: 6px;
+  }
 }
