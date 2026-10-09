@@ -191,35 +191,35 @@ def request_otp(request):
 
 @api_view(["POST"])
 def verify_otp(request):
-    mobile = normalize_mobile(request.data.get("mobile", ""))
-    otp = str(request.data.get("otp", "")).strip()
-
-    if not mobile:
-        return Response(
-            {"error": "Please enter a valid 10-digit mobile number."},
-            status=status.HTTP_400_BAD_REQUEST,
-        )
-
-    if not validate_allowed_mobile(mobile):
-        return Response(
-            {
-                "error": (
-                    "OTP verification is available only for the "
-                    "configured test mobile number."
-                )
-            },
-            status=status.HTTP_400_BAD_REQUEST,
-        )
-
-    if len(otp) != 6 or not otp.isdigit():
-        return Response(
-            {"error": "Please enter a valid 6-digit OTP."},
-            status=status.HTTP_400_BAD_REQUEST,
-        )
-
-    phone_number = f"+91{mobile}"
-
     try:
+        mobile = normalize_mobile(request.data.get("mobile", ""))
+        otp = str(request.data.get("otp", "")).strip()
+
+        if not mobile:
+            return Response(
+                {"error": "Please enter a valid 10-digit mobile number."},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+
+        if not validate_allowed_mobile(mobile):
+            return Response(
+                {
+                    "error": (
+                        "OTP verification is available only for the "
+                        "configured test mobile number."
+                    )
+                },
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+
+        if len(otp) != 6 or not otp.isdigit():
+            return Response(
+                {"error": "Please enter a valid 6-digit OTP."},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+
+        phone_number = f"+91{mobile}"
+
         client = get_twilio_client()
 
         verification_check = (
@@ -230,6 +230,64 @@ def verify_otp(request):
                 to=phone_number,
                 code=otp,
             )
+        )
+
+        if verification_check.status != "approved":
+            return Response(
+                {"error": "Incorrect or expired OTP."},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+
+        # =====================================================
+        # OTP VERIFIED: GET OR CREATE USER AND CITIZEN SAFELY
+        # =====================================================
+
+        user, _ = User.objects.get_or_create(
+            username=f"citizen_{mobile}"
+        )
+
+        citizen = Citizen.objects.filter(mobile=mobile).first()
+
+        if not citizen:
+            if hasattr(user, "citizen_profile") and user.citizen_profile:
+                citizen = user.citizen_profile
+                citizen.mobile = mobile
+                citizen.is_verified = True
+                citizen.save()
+                citizen_created = False
+            else:
+                citizen = Citizen.objects.create(
+                    user=user,
+                    mobile=mobile,
+                    is_verified=True,
+                )
+                citizen_created = True
+        else:
+            citizen_created = False
+            if citizen.user != user:
+                Citizen.objects.filter(user=user).exclude(id=citizen.id).update(user=None)
+                citizen.user = user
+                citizen.is_verified = True
+                citizen.save(update_fields=["user", "is_verified"])
+            elif not citizen.is_verified:
+                citizen.is_verified = True
+                citizen.save(update_fields=["is_verified"])
+
+        # =====================================================
+        # CREATE OR RETRIEVE DRF AUTH TOKEN
+        # =====================================================
+
+        token, _ = Token.objects.get_or_create(user=user)
+
+        return Response(
+            {
+                "message": "OTP verified successfully.",
+                "token": token.key,
+                "citizen_id": citizen.id,
+                "is_new_citizen": citizen_created,
+                "citizen": CitizenSerializer(citizen).data,
+            },
+            status=status.HTTP_200_OK,
         )
 
     except TwilioRestException as exc:
@@ -252,63 +310,11 @@ def verify_otp(request):
             status=status.HTTP_502_BAD_GATEWAY,
         )
 
-    except Exception:
-        logger.exception("Unexpected error while verifying OTP.")
+    except Exception as exc:
+        logger.exception("Unexpected error while verifying OTP: %s", exc)
 
         return Response(
-            {"error": "Unable to verify OTP. Please try again."},
+            {"error": f"Unable to verify OTP: {str(exc)}"},
             status=status.HTTP_500_INTERNAL_SERVER_ERROR,
         )
 
-    if verification_check.status != "approved":
-        return Response(
-            {"error": "Incorrect or expired OTP."},
-            status=status.HTTP_400_BAD_REQUEST,
-        )
-
-    # =====================================================
-    # OTP VERIFIED: GET OR CREATE USER AND CITIZEN
-    # =====================================================
-
-    user, _ = User.objects.get_or_create(
-        username=f"citizen_{mobile}"
-    )
-
-    citizen, citizen_created = Citizen.objects.get_or_create(
-        mobile=mobile,
-        defaults={
-            "user": user,
-            "is_verified": True,
-        },
-    )
-
-    # Repair the relationship if the citizen already exists.
-    changed_fields = []
-
-    if citizen.user_id != user.id:
-        citizen.user = user
-        changed_fields.append("user")
-
-    if not citizen.is_verified:
-        citizen.is_verified = True
-        changed_fields.append("is_verified")
-
-    if changed_fields:
-        citizen.save(update_fields=changed_fields)
-
-    # =====================================================
-    # CREATE OR RETRIEVE DRF AUTH TOKEN
-    # =====================================================
-
-    token, _ = Token.objects.get_or_create(user=user)
-
-    return Response(
-        {
-            "message": "OTP verified successfully.",
-            "token": token.key,
-            "citizen_id": citizen.id,
-            "is_new_citizen": citizen_created,
-            "citizen": CitizenSerializer(citizen).data,
-        },
-        status=status.HTTP_200_OK,
-    )
