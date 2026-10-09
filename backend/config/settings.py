@@ -54,18 +54,20 @@ DEBUG = os.getenv(
 
 _allowed_hosts_raw = os.getenv(
     "DJANGO_ALLOWED_HOSTS",
-    "https://governmentyojana-zxvh.onrender.com/,localhost,127.0.0.1"
+    "governmentyojana-zxvh.onrender.com,localhost,127.0.0.1",
 )
 
 ALLOWED_HOSTS = [
-    "governmentyojana-zxvh.onrender.com",
-    "localhost",
-    "127.0.0.1",
+    host.strip()
+    for host in _allowed_hosts_raw.split(",")
+    if host.strip()
 ]
 
 _cors_raw = os.getenv(
     "DJANGO_CORS_ALLOWED_ORIGINS",
-    "http://localhost:5173,http://127.0.0.1:5173"
+    "https://governmentyojana.netlify.app,"
+    "http://localhost:5173,"
+    "http://127.0.0.1:5173",
 )
 
 CORS_ALLOWED_ORIGINS = [
@@ -81,7 +83,9 @@ CORS_ALLOW_HEADERS = list(default_headers) + [
 
 _csrf_raw = os.getenv(
     "DJANGO_CSRF_TRUSTED_ORIGINS",
-    "http://localhost:5173,http://127.0.0.1:5173"
+    "https://governmentyojana.netlify.app,"
+    "http://localhost:5173,"
+    "http://127.0.0.1:5173",
 )
 
 CSRF_TRUSTED_ORIGINS = [
@@ -97,10 +101,15 @@ CSRF_TRUSTED_ORIGINS = [
 
 TWILIO_ACCOUNT_SID = os.getenv("TWILIO_ACCOUNT_SID", "")
 TWILIO_AUTH_TOKEN = os.getenv("TWILIO_AUTH_TOKEN", "")
+
 TWILIO_VERIFY_SERVICE_SID = os.getenv(
     "TWILIO_VERIFY_SERVICE_SID", ""
 )
-TWILIO_ALLOWED_MOBILE = os.getenv("TWILIO_ALLOWED_MOBILE", "")
+
+TWILIO_ALLOWED_MOBILE = os.getenv(
+    "TWILIO_ALLOWED_MOBILE", ""
+)
+
 OTP_MODE = os.getenv("OTP_MODE", "twilio")
 
 
@@ -195,6 +204,7 @@ if DATABASE_URL:
                 },
             }
         }
+
     elif url.scheme == "sqlite":
         DATABASES = {
             "default": {
@@ -202,11 +212,13 @@ if DATABASE_URL:
                 "NAME": url.path,
             }
         }
+
     else:
         raise ValueError(
             "Unsupported DATABASE_URL scheme. "
             "Use PostgreSQL or SQLite."
         )
+
 else:
     DATABASES = {
         "default": {
@@ -254,6 +266,7 @@ AUTH_PASSWORD_VALIDATORS = [
 
 LANGUAGE_CODE = "en-us"
 TIME_ZONE = "Asia/Kolkata"
+
 USE_I18N = True
 USE_TZ = True
 
@@ -312,6 +325,7 @@ if not DEBUG:
     SECURE_HSTS_SECONDS = int(
         os.getenv("DJANGO_SECURE_HSTS_SECONDS", "31536000")
     )
+
     SECURE_HSTS_INCLUDE_SUBDOMAINS = True
     SECURE_HSTS_PRELOAD = True
 
