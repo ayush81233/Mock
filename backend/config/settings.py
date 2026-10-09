@@ -319,15 +319,15 @@ REST_FRAMEWORK = {
 # ============================================================
 
 if not DEBUG:
-    SESSION_COOKIE_SECURE = True
-    CSRF_COOKIE_SECURE = True
+    SESSION_COOKIE_SECURE = os.getenv("DJANGO_SESSION_COOKIE_SECURE", "True").lower() in ("true", "1", "yes")
+    CSRF_COOKIE_SECURE = os.getenv("DJANGO_CSRF_COOKIE_SECURE", "True").lower() in ("true", "1", "yes")
 
     SECURE_HSTS_SECONDS = int(
-        os.getenv("DJANGO_SECURE_HSTS_SECONDS", "31536000")
+        os.getenv("DJANGO_SECURE_HSTS_SECONDS", "0")
     )
-
-    SECURE_HSTS_INCLUDE_SUBDOMAINS = True
-    SECURE_HSTS_PRELOAD = True
+    if SECURE_HSTS_SECONDS > 0:
+        SECURE_HSTS_INCLUDE_SUBDOMAINS = True
+        SECURE_HSTS_PRELOAD = True
 
     SECURE_PROXY_SSL_HEADER = (
         "HTTP_X_FORWARDED_PROTO",
@@ -335,7 +335,7 @@ if not DEBUG:
     )
 
     if os.getenv(
-        "DJANGO_SECURE_SSL_REDIRECT", "True"
+        "DJANGO_SECURE_SSL_REDIRECT", "False"
     ).lower() in ("true", "1", "yes"):
         SECURE_SSL_REDIRECT = True
 
