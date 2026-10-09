@@ -22,10 +22,15 @@ class Scheme(models.Model):
     #     "max_income": 300000
     # }
     eligibility_rules = models.JSONField(default=dict)
+    
+    application_fields = models.JSONField(default=list)
 
     benefits = models.JSONField(default=list)
     documents = models.JSONField(default=list)
     application_process = models.JSONField(default=list)
+
+    # Multilingual translations (e.g. {"kn": {...}, "hi": {...}})
+    translations = models.JSONField(default=dict, blank=True)
 
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)

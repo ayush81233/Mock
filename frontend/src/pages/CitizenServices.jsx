@@ -1,20 +1,21 @@
 import { Link } from "react-router-dom";
+import { useTranslation } from "../i18n";
 import "./CitizenServices.css";
 
 function CitizenServices() {
+  const { t } = useTranslation();
+
   return (
     <div className="citizen-services-page">
 
       <section className="page-header">
         <div className="container">
-          <span className="page-kicker">Citizen Services</span>
+          <span className="page-kicker">{t("services.title")}</span>
 
-          <h1>Citizen Services</h1>
+          <h1>{t("services.title")}</h1>
 
           <p>
-            Use these services to explore government schemes, understand
-            eligibility requirements and identify the documents commonly
-            required for applications.
+            {t("services.subtitle")}
           </p>
         </div>
       </section>
@@ -27,31 +28,14 @@ function CitizenServices() {
             <div className="service-card">
               <div className="service-icon">🔎</div>
 
-              <h2>Scheme Finder</h2>
+              <h2>{t("services.schemeFinderTitle")}</h2>
 
               <p>
-                Find schemes based on basic information such as category,
-                age group and other eligibility details.
+                {t("services.schemeFinderDesc")}
               </p>
 
               <Link to="/citizen-services/scheme-finder" className="service-button">
-                Find Schemes
-              </Link>
-            </div>
-
-
-            <div className="service-card">
-              <div className="service-icon">✓</div>
-
-              <h2>Eligibility Checker</h2>
-
-              <p>
-                Check whether your basic information matches the eligibility
-                conditions of available demo schemes.
-              </p>
-
-              <Link to="/citizen-services/eligibility" className="service-button">
-                Check Eligibility
+                {t("services.findSchemes")}
               </Link>
             </div>
 
@@ -59,15 +43,14 @@ function CitizenServices() {
             <div className="service-card">
               <div className="service-icon">📄</div>
 
-              <h2>Document Checklist</h2>
+              <h2>{t("services.docChecklistTitle")}</h2>
 
               <p>
-                View the documents that may commonly be required when
-                applying for a selected scheme.
+                {t("services.docChecklistDesc")}
               </p>
 
               <Link to="/citizen-services/documents" className="service-button">
-                View Checklist
+                {t("services.viewChecklist")}
               </Link>
             </div>
 
@@ -76,13 +59,10 @@ function CitizenServices() {
 
           <div className="services-notice">
 
-            <strong>Demo Information</strong>
+            <strong>{t("footer.importantTitle")}</strong>
 
             <p>
-              These citizen services are part of a demonstration portal.
-              Eligibility results and document requirements shown here are
-              sample data and should not be treated as official government
-              decisions.
+              {t("footer.disclaimerText")}
             </p>
 
           </div>

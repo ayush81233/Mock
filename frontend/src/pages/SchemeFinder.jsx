@@ -1,10 +1,12 @@
 import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
+import { useTranslation } from "../i18n";
 import "./SchemeFinder.css";
 
 import { getSchemes } from "../api";
 
 function SchemeFinder() {
+  const { t, getLocalizedScheme } = useTranslation();
   const [schemes, setSchemes] = useState([]);
   const [searchTerm, setSearchTerm] = useState("");
   const [category, setCategory] = useState("All");
@@ -35,11 +37,9 @@ function SchemeFinder() {
       <section className="page-section">
         <div className="container">
           <div className="page-heading">
-            <span className="section-label">Citizen Services</span>
-
-            <h1>Scheme Finder</h1>
-
-            <p>Loading schemes...</p>
+            <span className="section-label">{t("nav.services")}</span>
+            <h1>{t("services.schemeFinderTitle")}</h1>
+            <p>{t("common.loading")}</p>
           </div>
         </div>
       </section>
@@ -51,10 +51,8 @@ function SchemeFinder() {
       <section className="page-section">
         <div className="container">
           <div className="page-heading">
-            <span className="section-label">Citizen Services</span>
-
-            <h1>Scheme Finder</h1>
-
+            <span className="section-label">{t("nav.services")}</span>
+            <h1>{t("services.schemeFinderTitle")}</h1>
             <p className="error-message">{error}</p>
           </div>
         </div>
@@ -68,14 +66,13 @@ function SchemeFinder() {
 
         <div className="page-heading">
           <span className="section-label">
-            Citizen Services
+            {t("nav.services")}
           </span>
 
-          <h1>Scheme Finder</h1>
+          <h1>{t("services.schemeFinderTitle")}</h1>
 
           <p>
-            Search and explore schemes available in this
-            demonstration portal.
+            {t("services.schemeFinderDesc")}
           </p>
         </div>
 
@@ -83,7 +80,7 @@ function SchemeFinder() {
 
           <input
             type="text"
-            placeholder="Search schemes..."
+            placeholder={t("schemes.searchPlaceholder")}
             value={searchTerm}
             onChange={(event) =>
               setSearchTerm(event.target.value)
@@ -97,15 +94,15 @@ function SchemeFinder() {
             }
           >
             <option value="All">
-              All Categories
+              {t("schemes.allCategories")}
             </option>
 
             <option value="Health">
-              Health
+              {t("schemes.categoryHealth")}
             </option>
 
             <option value="Pension">
-              Pension
+              {t("schemes.categoryPension")}
             </option>
           </select>
 
@@ -113,39 +110,37 @@ function SchemeFinder() {
 
         {schemes.length === 0 ? (
           <div className="empty-state">
-            <h2>No schemes found</h2>
-
-            <p>
-              Try changing your search term or selecting
-              another category.
-            </p>
+            <h2>{t("schemes.noResults")}</h2>
           </div>
         ) : (
           <div className="scheme-grid">
 
-            {schemes.map((scheme) => (
-              <article
-                className="scheme-card"
-                key={scheme.id}
-              >
-
-                <span className="scheme-category">
-                  {scheme.category}
-                </span>
-
-                <h2>{scheme.title}</h2>
-
-                <p>{scheme.short_description}</p>
-
-                <Link
-                  to={`/schemes/${scheme.id}`}
-                  className="scheme-button"
+            {schemes.map((item) => {
+              const scheme = getLocalizedScheme(item);
+              return (
+                <article
+                  className="scheme-card"
+                  key={scheme.id}
                 >
-                  View Details
-                </Link>
 
-              </article>
-            ))}
+                  <span className="scheme-category">
+                    {scheme.category}
+                  </span>
+
+                  <h2>{scheme.title}</h2>
+
+                  <p>{scheme.short_description}</p>
+
+                  <Link
+                    to={`/schemes/${scheme.id}`}
+                    className="scheme-button"
+                  >
+                    {t("home.viewDetails")}
+                  </Link>
+
+                </article>
+              );
+            })}
 
           </div>
         )}

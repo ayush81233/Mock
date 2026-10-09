@@ -1,7 +1,10 @@
 import { Link } from "react-router-dom";
+import { useTranslation } from "../i18n";
 import "./Home.css";
 
 function Home() {
+  const { t } = useTranslation();
+
   return (
     <div className="home-page">
 
@@ -14,28 +17,26 @@ function Home() {
           <div className="hero-text">
 
             <span className="hero-label">
-              CITIZEN INFORMATION PORTAL
+              {t("home.heroTag")}
             </span>
 
             <h1>
-              Find Government Schemes
-              & Services
+              {t("home.heroTitle")}
             </h1>
 
             <p>
-              Discover schemes, understand eligibility,
-              check required documents and learn how to apply.
+              {t("home.heroSubtitle")}
             </p>
 
             <div className="hero-actions">
 
               <Link to="/schemes" className="primary-button">
-  Find a Scheme
-</Link>
+                {t("home.viewAllSchemes")}
+              </Link>
 
-<Link to="/services" className="secondary-button">
-  Check Eligibility
-</Link>
+              <Link to="/citizen-services/scheme-finder" className="secondary-button">
+                {t("services.schemeFinderTitle")}
+              </Link>
 
             </div>
 
@@ -43,23 +44,23 @@ function Home() {
 
           <div className="hero-panel">
 
-            <h3>What are you looking for?</h3>
+            <h3>{t("home.quickAccess")}</h3>
 
             <Link to="/schemes">
-  Health Schemes
-</Link>
+              {t("home.quickHealth")}
+            </Link>
 
-<Link to="/schemes">
-  Pension Schemes
-</Link>
+            <Link to="/schemes">
+              {t("home.quickPension")}
+            </Link>
 
-<Link to="/documents">
-  Documents
-</Link>
+            <Link to="/documents">
+              {t("home.quickDocuments")}
+            </Link>
 
-<Link to="/services">
-  Citizen Services
-</Link>
+            <Link to="/services">
+              {t("nav.services")}
+            </Link>
 
           </div>
 
@@ -75,62 +76,62 @@ function Home() {
         <div className="container">
 
           <div className="section-heading">
-            <span>QUICK ACCESS</span>
+            <span>{t("home.quickAccess")}</span>
 
             <h2>
-              Citizen Services
+              {t("nav.services")}
             </h2>
 
             <p>
-              Access commonly used services and information.
+              {t("services.subtitle")}
             </p>
           </div>
 
 
           <div className="service-grid">
 
-            <div className="service-card">
+            <Link to="/schemes" className="service-card" style={{ textDecoration: "none", color: "inherit" }}>
               <div className="service-icon">⌕</div>
 
-              <h3>Find a Scheme</h3>
+              <h3>{t("schemes.title")}</h3>
 
               <p>
-                Browse government schemes based on your needs.
+                {t("schemes.subtitle")}
               </p>
-            </div>
+            </Link>
 
 
-            <div className="service-card">
+            <Link to="/citizen-services/scheme-finder" className="service-card" style={{ textDecoration: "none", color: "inherit" }}>
               <div className="service-icon">✓</div>
 
-              <h3>Eligibility Checker</h3>
+              <h3>{t("services.schemeFinderTitle")}</h3>
 
               <p>
-                Understand whether you may meet scheme requirements.
+                {t("services.schemeFinderDesc")}
               </p>
-            </div>
+            </Link>
 
 
-            <div className="service-card">
+            <Link to="/documents" className="service-card" style={{ textDecoration: "none", color: "inherit" }}>
               <div className="service-icon">▣</div>
 
-              <h3>Document Centre</h3>
+              <h3>{t("documents.title")}</h3>
 
               <p>
-                Learn which documents may be required.
+                {t("documents.subtitle")}
               </p>
-            </div>
+            </Link>
 
 
-            <div className="service-card">
+            <Link to="/help" className="service-card" style={{ textDecoration: "none", color: "inherit" }}>
               <div className="service-icon">?</div>
 
-              <h3>Get Help</h3>
+              <h3>{t("help.title")}</h3>
 
               <p>
-                Find answers to common citizen questions.
+                {t("help.subtitle")}
               </p>
-            </div>
+            </Link>
 
           </div>
 
@@ -146,10 +147,10 @@ function Home() {
         <div className="container">
 
           <div className="section-heading">
-            <span>SCHEME CATEGORIES</span>
+            <span>{t("home.categoriesTitle")}</span>
 
             <h2>
-              Explore Schemes
+              {t("home.featuredTitle")}
             </h2>
           </div>
 
@@ -158,36 +159,27 @@ function Home() {
 
             <div className="category-card">
               <span>01</span>
-              <h3>Health</h3>
+              <h3>{t("home.categoryHealth")}</h3>
               <p>
-                Healthcare and medical assistance schemes.
+                {t("home.categoryHealthDesc")}
               </p>
             </div>
 
 
             <div className="category-card">
               <span>02</span>
-              <h3>Pension</h3>
+              <h3>{t("home.categoryPension")}</h3>
               <p>
-                Pension and social security related schemes.
+                {t("home.categoryPensionDesc")}
               </p>
             </div>
 
 
             <div className="category-card">
               <span>03</span>
-              <h3>SIR</h3>
+              <h3>{t("home.categoryServices")}</h3>
               <p>
-                Information and guidance related to SIR.
-              </p>
-            </div>
-
-
-            <div className="category-card">
-              <span>04</span>
-              <h3>Other Services</h3>
-              <p>
-                Explore additional citizen services.
+                {t("home.categoryServicesDesc")}
               </p>
             </div>
 
@@ -206,30 +198,18 @@ function Home() {
 
           <div>
             <span className="section-label">
-              IMPORTANT INFORMATION
+              {t("home.infoBoxLabel")}
             </span>
 
             <h2>
-              Before applying for a scheme
+              {t("home.infoBoxTitle")}
             </h2>
           </div>
 
           <div className="information-list">
 
             <p>
-              ✓ Check the eligibility requirements.
-            </p>
-
-            <p>
-              ✓ Keep the required documents ready.
-            </p>
-
-            <p>
-              ✓ Read the application process carefully.
-            </p>
-
-            <p>
-              ✓ Verify information before submitting an application.
+              {t("home.infoBoxDesc")}
             </p>
 
           </div>

@@ -1,34 +1,36 @@
 import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
+import { useTranslation } from "../i18n";
 import "./Schemes.css";
 import { getSchemes } from "../api";
 
 function Schemes() {
+  const { t, getLocalizedScheme } = useTranslation();
   const [schemes, setSchemes] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
 
-useEffect(() => {
-  getSchemes()
-    .then((data) => {
-      setSchemes(data);
-      setLoading(false);
-    })
-    .catch((err) => {
-      console.error(err);
-      setError("Unable to load schemes from the server.");
-      setLoading(false);
-    });
-}, []);
+  useEffect(() => {
+    getSchemes()
+      .then((data) => {
+        setSchemes(data);
+        setLoading(false);
+      })
+      .catch((err) => {
+        console.error(err);
+        setError("Unable to load schemes from the server.");
+        setLoading(false);
+      });
+  }, []);
 
   if (loading) {
     return (
       <section className="page-section">
         <div className="container">
           <div className="page-heading">
-            <span className="section-label">Government Schemes</span>
-            <h1>Available Schemes</h1>
-            <p>Loading schemes...</p>
+            <span className="section-label">{t("nav.schemes")}</span>
+            <h1>{t("schemes.title")}</h1>
+            <p>{t("common.loading")}</p>
           </div>
         </div>
       </section>
@@ -40,8 +42,8 @@ useEffect(() => {
       <section className="page-section">
         <div className="container">
           <div className="page-heading">
-            <span className="section-label">Government Schemes</span>
-            <h1>Available Schemes</h1>
+            <span className="section-label">{t("nav.schemes")}</span>
+            <h1>{t("schemes.title")}</h1>
             <p className="error-message">{error}</p>
           </div>
         </div>
@@ -54,35 +56,37 @@ useEffect(() => {
       <div className="container">
 
         <div className="page-heading">
-          <span className="section-label">Government Schemes</span>
-          <h1>Available Schemes</h1>
+          <span className="section-label">{t("nav.schemes")}</span>
+          <h1>{t("schemes.title")}</h1>
           <p>
-            Explore healthcare and pension-related schemes available
-            through this demonstration portal.
+            {t("schemes.subtitle")}
           </p>
         </div>
 
         <div className="scheme-grid">
-          {schemes.map((scheme) => (
-            <article className="scheme-card" key={scheme.id}>
+          {schemes.map((scheme) => {
+            const loc = getLocalizedScheme(scheme);
+            return (
+              <article className="scheme-card" key={loc.id}>
 
-              <span className="scheme-category">
-                {scheme.category}
-              </span>
+                <span className="scheme-category">
+                  {loc.category}
+                </span>
 
-              <h2>{scheme.title}</h2>
+                <h2>{loc.title}</h2>
 
-              <p>{scheme.short_description}</p>
+                <p>{loc.short_description}</p>
 
-              <Link
-                to={`/schemes/${scheme.id}`}
-                className="scheme-button"
-              >
-                View Details
-              </Link>
+                <Link
+                  to={`/schemes/${loc.id}`}
+                  className="scheme-button"
+                >
+                  {t("home.viewDetails")}
+                </Link>
 
-            </article>
-          ))}
+              </article>
+            );
+          })}
         </div>
 
       </div>

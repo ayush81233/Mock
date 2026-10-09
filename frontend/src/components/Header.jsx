@@ -1,17 +1,19 @@
 import { Link } from "react-router-dom";
+import { useTranslation } from "../i18n";
 import "./Header.css";
 
-
 function Header() {
+  const { language, setLanguage, t } = useTranslation();
+
   return (
     <header>
       {/* Government Utility Bar */}
       <div className="gov-topbar">
         <div className="container gov-topbar-inner">
-          <span>Government Citizen Services Portal</span>
+          <span>{t("header.govPortal")}</span>
 
           <div className="topbar-right">
-            <button type="button">Skip to Main Content</button>
+            <button type="button">{t("header.skipToContent")}</button>
             <button type="button">A-</button>
             <button type="button">A</button>
             <button type="button">A+</button>
@@ -30,11 +32,11 @@ function Header() {
 
             <div>
               <div className="brand-title">
-                Sarkar Yojana Seva
+                {t("header.brandTitle")}
               </div>
 
               <div className="brand-subtitle">
-                Citizen Scheme & Service Information
+                {t("header.brandSubtitle")}
               </div>
             </div>
           </Link>
@@ -43,13 +45,18 @@ function Header() {
 
             <div className="language-control">
               <label htmlFor="language">
-                Language
+                {t("header.language")}
               </label>
 
-              <select id="language" defaultValue="English">
-                <option value="English">English</option>
-                <option value="Hindi">हिंदी</option>
-                <option value="Kannada">ಕನ್ನಡ</option>
+              <select
+                id="language"
+                value={language}
+                onChange={(e) => setLanguage(e.target.value)}
+                aria-label={t("header.language")}
+              >
+                <option value="en">English</option>
+                <option value="kn">ಕನ್ನಡ</option>
+                <option value="hi">हिन्दी</option>
               </select>
             </div>
 
@@ -57,7 +64,7 @@ function Header() {
               type="button"
               className="accessibility-button"
             >
-              Accessibility
+              {t("header.accessibility")}
             </button>
 
           </div>
@@ -69,30 +76,34 @@ function Header() {
       <nav className="main-nav">
         <div className="container nav-inner">
 
-          <Link to="/">Home</Link>
+          <Link to="/">{t("nav.home")}</Link>
 
           <Link to="/schemes">
-            Schemes
-          </Link>
-
-          <Link to="/sir">
-            SIR
+            {t("nav.schemes")}
           </Link>
 
           <Link to="/documents">
-            Documents
+            {t("nav.documents")}
           </Link>
 
           <Link to="/services">
-            Citizen Services
+            {t("nav.services")}
           </Link>
 
-          <Link to="/search">
-            Search
+          <Link to="/my-services">
+            {t("nav.applications")}
+          </Link>
+
+          <Link to="/my-applications">
+            {t("nav.trackApplication")}
           </Link>
 
           <Link to="/help">
-            Help & Support
+            {t("nav.help")}
+          </Link>
+
+          <Link to="/disclaimer">
+            {t("nav.about")}
           </Link>
 
         </div>

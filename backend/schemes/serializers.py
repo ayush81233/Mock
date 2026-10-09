@@ -19,4 +19,6 @@ class SchemeSerializer(serializers.ModelSerializer):
             "application_process",
             "created_at",
             "updated_at",
+            "application_fields",
+            "translations",
         ]

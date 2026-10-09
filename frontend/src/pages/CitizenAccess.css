@@ -1,0 +1,658 @@
+/* =========================================================
+   CITIZEN ACCESS PAGE
+   ========================================================= */
+
+.citizen-access-page {
+  min-height: calc(100vh - 140px);
+
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  padding: 60px 20px;
+
+  background:
+    radial-gradient(
+      circle at 15% 20%,
+      rgba(255, 153, 51, 0.10),
+      transparent 28%
+    ),
+    radial-gradient(
+      circle at 85% 80%,
+      rgba(19, 136, 8, 0.09),
+      transparent 28%
+    ),
+    linear-gradient(
+      135deg,
+      #f8fafc 0%,
+      #eef2f7 100%
+    );
+
+  position: relative;
+  overflow: hidden;
+}
+
+
+/* =========================================================
+   BACKGROUND DECORATION
+   ========================================================= */
+
+.citizen-access-page::before {
+  content: "";
+
+  position: absolute;
+
+  width: 420px;
+  height: 420px;
+
+  border-radius: 50%;
+
+  background: rgba(255, 153, 51, 0.07);
+
+  top: -180px;
+  left: -160px;
+}
+
+
+.citizen-access-page::after {
+  content: "";
+
+  position: absolute;
+
+  width: 380px;
+  height: 380px;
+
+  border-radius: 50%;
+
+  background: rgba(19, 136, 8, 0.06);
+
+  bottom: -170px;
+  right: -130px;
+}
+
+
+/* =========================================================
+   MAIN CARD
+   ========================================================= */
+
+.citizen-access-card {
+  width: 100%;
+  max-width: 470px;
+
+  background: rgba(255, 255, 255, 0.96);
+
+  border: 1px solid rgba(15, 23, 42, 0.08);
+
+  border-radius: 22px;
+
+  padding: 42px 42px 32px;
+
+  box-shadow:
+    0 25px 60px rgba(15, 23, 42, 0.10),
+    0 8px 20px rgba(15, 23, 42, 0.05);
+
+  position: relative;
+  z-index: 2;
+
+  animation: citizenCardAppear 0.45s ease-out;
+}
+
+
+@keyframes citizenCardAppear {
+  from {
+    opacity: 0;
+    transform: translateY(18px);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+
+/* =========================================================
+   HEADER
+   ========================================================= */
+
+.citizen-access-header {
+  text-align: center;
+
+  margin-bottom: 32px;
+}
+
+
+.citizen-access-icon {
+  width: 68px;
+  height: 68px;
+
+  margin: 0 auto 18px;
+
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  border-radius: 18px;
+
+  background:
+    linear-gradient(
+      135deg,
+      #ff9933,
+      #e87500
+    );
+
+  color: white;
+
+  font-size: 30px;
+
+  box-shadow:
+    0 10px 25px rgba(255, 153, 51, 0.25);
+}
+
+
+.citizen-access-header h1 {
+  margin: 0;
+
+  color: #172033;
+
+  font-size: 30px;
+
+  font-weight: 750;
+
+  letter-spacing: -0.5px;
+}
+
+
+.citizen-access-header p {
+  margin: 9px auto 0;
+
+  max-width: 340px;
+
+  color: #687386;
+
+  font-size: 14px;
+
+  line-height: 1.6;
+}
+
+
+/* =========================================================
+   FORM
+   ========================================================= */
+
+.citizen-access-form {
+  display: flex;
+
+  flex-direction: column;
+
+  gap: 12px;
+}
+
+
+.citizen-access-form label {
+  color: #273247;
+
+  font-size: 14px;
+
+  font-weight: 650;
+
+  margin-top: 4px;
+}
+
+
+/* =========================================================
+   MOBILE INPUT
+   ========================================================= */
+
+.mobile-input-wrapper {
+  display: flex;
+
+  align-items: center;
+
+  height: 56px;
+
+  border: 1px solid #d8dee8;
+
+  border-radius: 12px;
+
+  background: #ffffff;
+
+  overflow: hidden;
+
+  transition:
+    border-color 0.2s ease,
+    box-shadow 0.2s ease;
+}
+
+
+.mobile-input-wrapper:focus-within {
+  border-color: #ff9933;
+
+  box-shadow:
+    0 0 0 4px rgba(255, 153, 51, 0.10);
+}
+
+
+.country-code {
+  height: 100%;
+
+  padding: 0 15px;
+
+  display: flex;
+  align-items: center;
+
+  color: #4b5565;
+
+  font-size: 15px;
+
+  font-weight: 650;
+
+  background: #f5f7fa;
+
+  border-right: 1px solid #e1e5eb;
+}
+
+
+.mobile-input-wrapper input {
+  flex: 1;
+
+  width: 100%;
+
+  height: 100%;
+
+  border: none;
+
+  outline: none;
+
+  padding: 0 16px;
+
+  color: #172033;
+
+  background: transparent;
+
+  font-size: 16px;
+
+  letter-spacing: 0.3px;
+}
+
+
+.mobile-input-wrapper input::placeholder {
+  color: #9aa3b2;
+}
+
+
+/* =========================================================
+   OTP INPUT
+   ========================================================= */
+
+#otp {
+  width: 100%;
+
+  height: 58px;
+
+  box-sizing: border-box;
+
+  border: 1px solid #d8dee8;
+
+  border-radius: 12px;
+
+  outline: none;
+
+  background: #ffffff;
+
+  color: #172033;
+
+  text-align: center;
+
+  font-size: 24px;
+
+  font-weight: 700;
+
+  letter-spacing: 9px;
+
+  padding-left: 9px;
+
+  transition:
+    border-color 0.2s ease,
+    box-shadow 0.2s ease;
+}
+
+
+#otp:focus {
+  border-color: #ff9933;
+
+  box-shadow:
+    0 0 0 4px rgba(255, 153, 51, 0.10);
+}
+
+
+#otp::placeholder {
+  color: #b7bec9;
+
+  letter-spacing: 5px;
+
+  font-size: 17px;
+}
+
+
+/* =========================================================
+   PRIMARY BUTTON
+   ========================================================= */
+
+.citizen-primary-button {
+  width: 100%;
+
+  height: 54px;
+
+  margin-top: 12px;
+
+  border: none;
+
+  border-radius: 12px;
+
+  background:
+    linear-gradient(
+      135deg,
+      #ff9933,
+      #ef7f16
+    );
+
+  color: white;
+
+  font-size: 15px;
+
+  font-weight: 700;
+
+  cursor: pointer;
+
+  box-shadow:
+    0 8px 18px rgba(239, 127, 22, 0.22);
+
+  transition:
+    transform 0.18s ease,
+    box-shadow 0.18s ease,
+    opacity 0.18s ease;
+}
+
+
+.citizen-primary-button:hover:not(:disabled) {
+  transform: translateY(-1px);
+
+  box-shadow:
+    0 12px 24px rgba(239, 127, 22, 0.28);
+}
+
+
+.citizen-primary-button:active:not(:disabled) {
+  transform: translateY(0);
+}
+
+
+.citizen-primary-button:disabled {
+  opacity: 0.65;
+
+  cursor: not-allowed;
+
+  box-shadow: none;
+}
+
+
+/* =========================================================
+   OTP SENT MESSAGE
+   ========================================================= */
+
+.otp-sent-message {
+  text-align: center;
+
+  padding: 18px 16px;
+
+  margin-bottom: 8px;
+
+  border-radius: 14px;
+
+  background: #f7faf8;
+
+  border: 1px solid #dcecdf;
+}
+
+
+.otp-sent-message strong:first-child {
+  display: block;
+
+  color: #147a25;
+
+  font-size: 15px;
+
+  margin-bottom: 8px;
+}
+
+
+.otp-sent-message p {
+  margin: 0 0 4px;
+
+  color: #6c7584;
+
+  font-size: 13px;
+}
+
+
+.otp-sent-message strong:last-child {
+  color: #243044;
+
+  font-size: 16px;
+
+  letter-spacing: 0.4px;
+}
+
+
+/* =========================================================
+   OTP ACTIONS
+   ========================================================= */
+
+.otp-actions {
+  display: flex;
+
+  justify-content: center;
+
+  align-items: center;
+
+  gap: 20px;
+
+  margin-top: 10px;
+}
+
+
+.text-button {
+  border: none;
+
+  background: transparent;
+
+  color: #1557a6;
+
+  font-size: 13px;
+
+  font-weight: 650;
+
+  cursor: pointer;
+
+  padding: 5px 2px;
+}
+
+
+.text-button:hover:not(:disabled) {
+  text-decoration: underline;
+}
+
+
+.text-button:disabled {
+  opacity: 0.5;
+
+  cursor: not-allowed;
+}
+
+
+/* =========================================================
+   SUCCESS MESSAGE
+   ========================================================= */
+
+.citizen-success {
+  margin-top: 18px;
+
+  padding: 12px 14px;
+
+  border-radius: 10px;
+
+  background: #edf8ef;
+
+  border: 1px solid #cce8d1;
+
+  color: #176b27;
+
+  font-size: 13px;
+
+  line-height: 1.5;
+
+  text-align: center;
+}
+
+
+/* =========================================================
+   ERROR MESSAGE
+   ========================================================= */
+
+.citizen-error {
+  margin-top: 18px;
+
+  padding: 12px 14px;
+
+  border-radius: 10px;
+
+  background: #fff3f2;
+
+  border: 1px solid #f2cbc7;
+
+  color: #b42318;
+
+  font-size: 13px;
+
+  line-height: 1.5;
+
+  text-align: center;
+}
+
+
+/* =========================================================
+   SECURITY NOTICE
+   ========================================================= */
+
+.citizen-access-notice {
+  margin-top: 28px;
+
+  padding: 16px 17px;
+
+  border-radius: 12px;
+
+  background: #f6f8fb;
+
+  border: 1px solid #e4e8ee;
+
+  position: relative;
+}
+
+
+.citizen-access-notice::before {
+  content: "✓";
+
+  position: absolute;
+
+  left: 17px;
+  top: 17px;
+
+  width: 22px;
+  height: 22px;
+
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  border-radius: 50%;
+
+  background: #138808;
+
+  color: white;
+
+  font-size: 12px;
+
+  font-weight: 700;
+}
+
+
+.citizen-access-notice strong,
+.citizen-access-notice p {
+  margin-left: 32px;
+}
+
+
+.citizen-access-notice strong {
+  display: block;
+
+  color: #344054;
+
+  font-size: 13px;
+}
+
+
+.citizen-access-notice p {
+  margin-top: 5px;
+  margin-bottom: 0;
+
+  color: #727b89;
+
+  font-size: 12px;
+
+  line-height: 1.55;
+}
+
+
+/* =========================================================
+   MOBILE
+   ========================================================= */
+
+@media (max-width: 600px) {
+
+  .citizen-access-page {
+    min-height: calc(100vh - 100px);
+
+    padding: 30px 15px;
+  }
+
+
+  .citizen-access-card {
+    padding: 32px 22px 24px;
+
+    border-radius: 18px;
+  }
+
+
+  .citizen-access-header {
+    margin-bottom: 26px;
+  }
+
+
+  .citizen-access-header h1 {
+    font-size: 26px;
+  }
+
+
+  .citizen-access-icon {
+    width: 60px;
+    height: 60px;
+
+    font-size: 26px;
+  }
+
+
+  .otp-actions {
+    gap: 15px;
+  }
+}

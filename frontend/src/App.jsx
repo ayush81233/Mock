@@ -1,93 +1,164 @@
 import { BrowserRouter, Routes, Route } from "react-router-dom";
 
 import MainLayout from "./layouts/MainLayout";
+import { LanguageProvider } from "./i18n";
 
 import Home from "./pages/Home";
 import Schemes from "./pages/Schemes";
-import SIR from "./pages/SIR";
 import Documents from "./pages/Documents";
 import Services from "./pages/Services";
 import Search from "./pages/Search";
 import Help from "./pages/Help";
 import SchemeDetails from "./pages/SchemeDetails";
-import "./styles/global.css";
 import CitizenServices from "./pages/CitizenServices";
 import DocumentDetails from "./pages/DocumentDetails";
 import MockDocument from "./pages/MockDocument";
-import EligibilityChecker from "./pages/EligibilityChecker";
 import SchemeFinder from "./pages/SchemeFinder";
-
+import DocumentChecklist from "./pages/DocumentChecklist";
 
 import Accessibility from "./pages/Accessibility";
 import Contact from "./pages/Contact";
 import Privacy from "./pages/Privacy";
 import Disclaimer from "./pages/Disclaimer";
 
-import DocumentChecklist from "./pages/DocumentChecklist";
+import CitizenAccess from "./pages/CitizenAccess";
+import MyServices from "./pages/MyServices";
+import ApplyScheme from "./pages/ApplyScheme";
+import ApplicationDetails from "./pages/ApplicationDetails";
+
+import "./styles/global.css";
+
 
 function App() {
   return (
     <BrowserRouter>
+      <LanguageProvider>
+        <MainLayout>
 
-      <MainLayout>
+          <Routes>
 
-        <Routes>
+            {/* Home */}
+            <Route
+              path="/"
+              element={<Home />}
+            />
 
-          <Route path="/" element={<Home />} />
+            {/* Schemes */}
+            <Route
+              path="/schemes"
+              element={<Schemes />}
+            />
 
-          <Route path="/schemes" element={<Schemes />} />
+            <Route
+              path="/schemes/:id"
+              element={<SchemeDetails />}
+            />
 
-          <Route path="/schemes/:id" element={<SchemeDetails />} />
+            {/* Apply Scheme Workflow */}
+            <Route
+              path="/apply/:schemeId"
+              element={<ApplyScheme />}
+            />
 
-          <Route path="/sir" element={<SIR />} />
+            {/* Documents */}
+            <Route
+              path="/documents"
+              element={<Documents />}
+            />
 
-          <Route path="/documents" element={<Documents />} />
+            <Route
+              path="/documents/mock/:type"
+              element={<MockDocument />}
+            />
 
-          <Route path="/services" element={<Services />} />
+            <Route
+              path="/documents/:id"
+              element={<DocumentDetails />}
+            />
 
-          <Route path="/search" element={<Search />} />
+            {/* Services */}
+            <Route
+              path="/services"
+              element={<Services />}
+            />
 
-          <Route path="/help" element={<Help />} />
+            <Route
+              path="/citizen-services"
+              element={<CitizenServices />}
+            />
 
-          <Route path="/documents/:id" element={<DocumentDetails />} />
-          
-          <Route path="/documents/mock/:type" element={<MockDocument />} />
+            <Route
+              path="/citizen-services/scheme-finder"
+              element={<SchemeFinder />}
+            />
 
-          <Route path="/citizen-services" element={<CitizenServices />} />
+            <Route
+              path="/citizen-services/documents"
+              element={<DocumentChecklist />}
+            />
 
-          <Route path="/citizen-services/scheme-finder" element={<SchemeFinder />} />
+            {/* Search */}
+            <Route
+              path="/search"
+              element={<Search />}
+            />
 
+            {/* Help */}
+            <Route
+              path="/help"
+              element={<Help />}
+            />
 
-          <Route path="/citizen-services/eligibility" element={<EligibilityChecker />} />
+            {/* Accessibility */}
+            <Route
+              path="/accessibility"
+              element={<Accessibility />}
+            />
 
-          <Route path="/citizen-services/documents" element={<DocumentChecklist />} />
+            {/* Contact */}
+            <Route
+              path="/contact"
+              element={<Contact />}
+            />
 
-          
+            {/* Privacy */}
+            <Route
+              path="/privacy"
+              element={<Privacy />}
+            />
 
-<Route
-  path="/accessibility"
-  element={<Accessibility />}
-/>
+            {/* Disclaimer */}
+            <Route
+              path="/disclaimer"
+              element={<Disclaimer />}
+            />
 
-<Route
-  path="/contact"
-  element={<Contact />}
-/>
+            {/* Citizen OTP Access */}
+            <Route
+              path="/citizen-access"
+              element={<CitizenAccess />}
+            />
 
-<Route
-  path="/privacy"
-  element={<Privacy />}
-/>
+            {/* Authenticated Citizen Area & Applications */}
+            <Route
+              path="/my-services"
+              element={<MyServices />}
+            />
 
-<Route
-  path="/disclaimer"
-  element={<Disclaimer />}
-/>
+            <Route
+              path="/my-applications"
+              element={<MyServices />}
+            />
 
-        </Routes>
+            <Route
+              path="/my-applications/:applicationNumber"
+              element={<ApplicationDetails />}
+            />
 
-      </MainLayout>
+          </Routes>
 
+        </MainLayout>
+      </LanguageProvider>
     </BrowserRouter>
   );
 }

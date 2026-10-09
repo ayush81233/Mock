@@ -1,59 +1,53 @@
 import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import { documents } from "../data/documents";
+import { useTranslation } from "../i18n";
 import "./Search.css";
 
 import { getSchemes } from "../api";
 
-const services = [
-  {
-    id: "scheme-finder",
-    title: "Scheme Finder",
-    description:
-      "Search and explore government schemes based on category and keywords.",
-    path: "/citizen-services/scheme-finder",
-    type: "service",
-  },
-  {
-    id: "eligibility-checker",
-    title: "Eligibility Checker",
-    description:
-      "Check potential scheme matches using basic applicant information.",
-    path: "/citizen-services/eligibility",
-    type: "service",
-  },
-  {
-    id: "document-checklist",
-    title: "Document Checklist",
-    description:
-      "View the documents associated with a selected scheme.",
-    path: "/citizen-services/documents",
-    type: "service",
-  },
-];
-
 function Search() {
+  const { t, getLocalizedScheme } = useTranslation();
   const [schemes, setSchemes] = useState([]);
   const [searchTerm, setSearchTerm] = useState("");
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
 
-useEffect(() => {
-  getSchemes()
-    .then((data) => {
-      setSchemes(data);
-      setLoading(false);
-    })
-    .catch((err) => {
-      console.error(err);
-      setError("Unable to load search data from the server.");
-      setLoading(false);
-    });
-}, []);
+  const services = [
+    {
+      id: "scheme-finder",
+      title: t("services.schemeFinderTitle"),
+      description: t("services.schemeFinderDesc"),
+      path: "/citizen-services/scheme-finder",
+      type: "service",
+    },
+    {
+      id: "document-checklist",
+      title: t("services.docChecklistTitle"),
+      description: t("services.docChecklistDesc"),
+      path: "/citizen-services/documents",
+      type: "service",
+    },
+  ];
+
+  useEffect(() => {
+    getSchemes()
+      .then((data) => {
+        setSchemes(data);
+        setLoading(false);
+      })
+      .catch((err) => {
+        console.error(err);
+        setError("Unable to load search data from the server.");
+        setLoading(false);
+      })
+  }, []);
 
   const query = searchTerm.trim().toLowerCase();
 
-  const schemeResults = schemes.filter((scheme) => {
+  const localizedSchemes = schemes.map(getLocalizedScheme);
+
+  const schemeResults = localizedSchemes.filter((scheme) => {
     if (!query) return false;
 
     const searchableText = [
@@ -111,14 +105,13 @@ useEffect(() => {
 
         <div className="page-heading">
           <span className="section-label">
-            Portal Search
+            {t("search.title")}
           </span>
 
-          <h1>Search</h1>
+          <h1>{t("search.title")}</h1>
 
           <p>
-            Search schemes, documents and citizen services
-            available on this demonstration portal.
+            {t("search.subtitle")}
           </p>
         </div>
 
@@ -130,7 +123,7 @@ useEffect(() => {
             onChange={(event) =>
               setSearchTerm(event.target.value)
             }
-            placeholder="Search schemes, documents or services..."
+            placeholder={t("search.placeholder")}
             className="search-input"
           />
 
@@ -138,7 +131,7 @@ useEffect(() => {
 
         {loading && (
           <div className="search-message">
-            Loading search data...
+            {t("common.loading")}
           </div>
         )}
 
@@ -150,7 +143,7 @@ useEffect(() => {
 
         {!loading && !error && query === "" && (
           <div className="search-message">
-            Enter a keyword to search the portal.
+            {t("search.placeholder")}
           </div>
         )}
 
@@ -159,13 +152,7 @@ useEffect(() => {
           query !== "" &&
           totalResults === 0 && (
             <div className="search-message">
-              <h2>No results found</h2>
-
-              <p>
-                Try another keyword such as
-                "health", "pension", "income", or
-                "documents".
-              </p>
+              <h2>{t("search.noResults")}</h2>
             </div>
           )}
 
@@ -176,14 +163,13 @@ useEffect(() => {
             <div className="search-results">
 
               <p className="result-count">
-                {totalResults} result
-                {totalResults !== 1 ? "s" : ""} found
+                {totalResults} {t("search.resultsFound")}
               </p>
 
               {schemeResults.length > 0 && (
                 <section className="search-result-section">
 
-                  <h2>Schemes</h2>
+                  <h2>{t("nav.schemes")}</h2>
 
                   <div className="search-result-grid">
 
@@ -207,7 +193,7 @@ useEffect(() => {
                           to={`/schemes/${scheme.id}`}
                           className="search-result-link"
                         >
-                          View Scheme →
+                          {t("home.viewDetails")}
                         </Link>
 
                       </article>
@@ -221,7 +207,7 @@ useEffect(() => {
               {documentResults.length > 0 && (
                 <section className="search-result-section">
 
-                  <h2>Documents</h2>
+                  <h2>{t("nav.documents")}</h2>
 
                   <div className="search-result-grid">
 
@@ -245,7 +231,7 @@ useEffect(() => {
                           to={`/documents/${document.id}`}
                           className="search-result-link"
                         >
-                          View Document →
+                          {t("documents.viewDetails")} →
                         </Link>
 
                       </article>
@@ -259,7 +245,7 @@ useEffect(() => {
               {serviceResults.length > 0 && (
                 <section className="search-result-section">
 
-                  <h2>Citizen Services</h2>
+                  <h2>{t("nav.services")}</h2>
 
                   <div className="search-result-grid">
 
@@ -279,7 +265,7 @@ useEffect(() => {
                           to={service.path}
                           className="search-result-link"
                         >
-                          Open Service →
+                          {t("home.viewDetails")}
                         </Link>
 
                       </article>

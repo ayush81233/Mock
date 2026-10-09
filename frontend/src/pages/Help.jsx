@@ -1,47 +1,62 @@
 import { useState } from "react";
 import { Link } from "react-router-dom";
+import { useTranslation } from "../i18n";
 import "./Help.css";
 
-const faqs = [
-  {
-    question: "What can I do on this portal?",
-    answer:
-      "This demonstration portal allows users to explore sample government schemes, check sample eligibility conditions, view document information and use citizen service tools."
-  },
-  {
-    question: "How do I find a scheme?",
-    answer:
-      "Open Scheme Finder from Citizen Services. You can filter schemes by category or search using keywords."
-  },
-  {
-    question: "Does the Eligibility Checker provide an official decision?",
-    answer:
-      "No. The Eligibility Checker uses demonstration rules and sample data. It does not provide an official government eligibility decision."
-  },
-  {
-    question: "Where can I see required documents?",
-    answer:
-      "You can use the Document Checklist under Citizen Services or open the Document Centre to view information about commonly used document types."
-  },
-  {
-    question: "Are the documents shown on this portal real?",
-    answer:
-      "No. Any documents shown in the demonstration are fictional mock documents and are clearly marked as samples."
-  },
-  {
-    question: "Can I submit an application through this portal?",
-    answer:
-      "No. This version of the portal is a demonstration and does not submit applications to government systems."
-  },
-  {
-    question: "Which languages are supported?",
-    answer:
-      "The portal interface is designed with support for English, Hindi and Kannada. Language switching can be expanded as the project develops."
-  },
-];
-
 function Help() {
+  const { t, language } = useTranslation();
   const [openIndex, setOpenIndex] = useState(null);
+
+  const faqs = [
+    {
+      question: language === "kn"
+        ? "ಈ ಪೋರ್ಟಲ್‌ನಲ್ಲಿ ನಾನು ಏನು ಮಾಡಬಹುದು?"
+        : language === "hi"
+        ? "मैं इस पोर्टल पर क्या कर सकता हूँ?"
+        : "What can I do on this portal?",
+      answer: language === "kn"
+        ? "ಈ ಪೋರ್ಟಲ್ ಮೂಲಕ ಬಳಕೆದಾರರು ಸರ್ಕಾರಿ ಯೋಜನೆಗಳನ್ನು ಅನ್ವೇಷಿಸಬಹುದು, ಅರ್ಹತಾ ಮಾನದಂಡಗಳು ಮತ್ತು ಅಗತ್ಯ ದಾಖಲೆಗಳನ್ನು ಪರಿಶೀಲಿಸಬಹುದು ಮತ್ತು ಆನ್‌ಲೈನ್‌ನಲ್ಲಿ ಅರ್ಜಿ ಸಲ್ಲಿಸಬಹುದು."
+        : language === "hi"
+        ? "यह पोर्टल उपयोगकर्ताओं को सरकारी योजनाओं का पता लगाने, पात्रता मानदंडों और आवश्यक दस्तावेजों की जांच करने और ऑनलाइन आवेदन करने की सुविधा देता है।"
+        : "This demonstration portal allows users to explore government schemes, verify eligibility criteria, check required documents, and submit applications online."
+    },
+    {
+      question: language === "kn"
+        ? "ಯೋಜನೆಯನ್ನು ಹೇಗೆ ಕಂಡುಹಿಡಿಯುವುದು?"
+        : language === "hi"
+        ? "मैं कोई योजना कैसे खोजूँ?"
+        : "How do I find a scheme?",
+      answer: language === "kn"
+        ? "ನಾಗರಿಕ ಸೇವೆಗಳಿಂದ ಯೋಜನಾ ಶೋಧಕವನ್ನು ತೆರೆಯಿರಿ ಅಥವಾ ಯೋಜನೆಗಳ ಡೈರೆಕ್ಟರಿಯಿಂದ ವರ್ಗದ ಪ್ರಕಾರ ಬ್ರೌಸ್ ಮಾಡಿ."
+        : language === "hi"
+        ? "नागरिक सेवाओं से योजना खोजक खोलें या योजना निर्देशिका से श्रेणी के आधार पर ब्राउज़ करें।"
+        : "Open Scheme Finder from Citizen Services or browse the Schemes directory by category or keyword."
+    },
+    {
+      question: language === "kn"
+        ? "ಅಗತ್ಯವಿರುವ ದಾಖಲೆಗಳನ್ನು ನಾನು ಎಲ್ಲಿ ನೋಡಬಹುದು?"
+        : language === "hi"
+        ? "मैं आवश्यक दस्तावेज़ कहाँ देख सकता हूँ?"
+        : "Where can I see required documents?",
+      answer: language === "kn"
+        ? "ದಾಖಲೆ ಕೇಂದ್ರಕ್ಕೆ ಭೇಟಿ ನೀಡಿ ಅಥವಾ ನಾಗರಿಕ ಸೇವೆಗಳ ಅಡಿಯಲ್ಲಿ ದಾಖಲೆ ಪರಿಶೀಲನಾ ಪಟ್ಟಿಯನ್ನು ಬಳಸಿ."
+        : language === "hi"
+        ? "दस्तावेज़ केंद्र पर जाएं या नागरिक सेवाओं के अंतर्गत दस्तावेज़ चेकलिस्ट का उपयोग करें।"
+        : "Visit the Document Centre or use the Document Checklist under Citizen Services to view requirements."
+    },
+    {
+      question: language === "kn"
+        ? "ಯಾವ ಭಾಷೆಗಳನ್ನು ಬೆಂಬಲಿಸಲಾಗುತ್ತದೆ?"
+        : language === "hi"
+        ? "किन भाषाओं का समर्थन है?"
+        : "Which languages are supported?",
+      answer: language === "kn"
+        ? "ಈ ಪೋರ್ಟಲ್ ಇಂಗ್ಲಿಷ್, ಕನ್ನಡ ಮತ್ತು ಹಿಂದಿ ಭಾಷೆಗಳನ್ನು ಬೆಂಬಲಿಸುತ್ತದೆ. ಹೆಡರ್‌ನಲ್ಲಿರುವ ಭಾಷಾ ಆಯ್ಕೆಯ ಮೂಲಕ ನೀವು ಭಾಷೆಯನ್ನು ಬದಲಾಯಿಸಬಹುದು."
+        : language === "hi"
+        ? "यह पोर्टल अंग्रेज़ी, कन्नड़ और हिन्दी का समर्थन करता है। आप हेडर में भाषा चयनकर्ता का उपयोग करके भाषा बदल सकते हैं।"
+        : "The portal supports English, Kannada, and Hindi. You can switch languages anytime using the language selector in the header."
+    },
+  ];
 
   const toggleFaq = (index) => {
     setOpenIndex(openIndex === index ? null : index);
@@ -54,14 +69,13 @@ function Help() {
         <div className="container">
 
           <span className="page-kicker">
-            Help & Support
+            {t("help.title")}
           </span>
 
-          <h1>Help & Support</h1>
+          <h1>{t("help.title")}</h1>
 
           <p>
-            Find answers to common questions about using this
-            demonstration portal.
+            {t("help.subtitle")}
           </p>
 
         </div>
@@ -76,11 +90,10 @@ function Help() {
             <div className="help-main">
 
               <div className="section-heading">
-                <h2>Frequently Asked Questions</h2>
+                <h2>{t("footer.faq")}</h2>
 
                 <p>
-                  Common questions about schemes, documents and
-                  citizen services.
+                  {t("help.subtitle")}
                 </p>
               </div>
 
@@ -131,26 +144,22 @@ function Help() {
 
               <div className="help-card">
 
-                <h2>Quick Help</h2>
+                <h2>{t("help.quickLinks")}</h2>
 
                 <Link to="/schemes">
-                  Explore Schemes
+                  {t("nav.schemes")}
                 </Link>
 
                 <Link to="/documents">
-                  Document Centre
+                  {t("nav.documents")}
                 </Link>
 
                 <Link to="/citizen-services/scheme-finder">
-                  Scheme Finder
-                </Link>
-
-                <Link to="/citizen-services/eligibility">
-                  Eligibility Checker
+                  {t("services.schemeFinderTitle")}
                 </Link>
 
                 <Link to="/citizen-services/documents">
-                  Document Checklist
+                  {t("services.docChecklistTitle")}
                 </Link>
 
               </div>
@@ -158,15 +167,14 @@ function Help() {
 
               <div className="help-card">
 
-                <h2>Need Assistance?</h2>
+                <h2>{t("help.contactSupport")}</h2>
 
                 <p>
-                  For this demonstration, use the Contact page to
-                  view the sample support information.
+                  {t("help.contactSupportDesc")}
                 </p>
 
                 <Link to="/contact" className="help-button">
-                  Contact
+                  {t("footer.contact")}
                 </Link>
 
               </div>

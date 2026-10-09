@@ -1,7 +1,9 @@
 import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
+import { useTranslation } from "../i18n";
 import "./DocumentChecklist.css";
 import { getSchemes } from "../api";
+
 const documentMap = {
   "Identity Proof": "identity-proof",
   "Residence Proof": "residence-certificate",
@@ -17,36 +19,38 @@ const documentMap = {
 };
 
 function DocumentChecklist() {
+  const { t, getLocalizedScheme } = useTranslation();
   const [schemes, setSchemes] = useState([]);
   const [selectedScheme, setSelectedScheme] = useState("");
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
 
-useEffect(() => {
-  getSchemes()
-    .then((data) => {
-      setSchemes(data);
-      setLoading(false);
-    })
-    .catch((err) => {
-      console.error(err);
-      setError("Unable to load schemes from the server.");
-      setLoading(false);
-    });
-}, []);
+  useEffect(() => {
+    getSchemes()
+      .then((data) => {
+        setSchemes(data);
+        setLoading(false);
+      })
+      .catch((err) => {
+        console.error(err);
+        setError("Unable to load schemes from the server.");
+        setLoading(false);
+      });
+  }, []);
 
-  const scheme = schemes.find(
+  const rawScheme = schemes.find(
     (item) => item.id === selectedScheme
   );
+  const scheme = getLocalizedScheme(rawScheme);
 
   if (loading) {
     return (
       <section className="page-section">
         <div className="container">
           <div className="page-heading">
-            <span className="section-label">Citizen Services</span>
-            <h1>Document Checklist</h1>
-            <p>Loading schemes...</p>
+            <span className="section-label">{t("nav.services")}</span>
+            <h1>{t("services.docChecklistTitle")}</h1>
+            <p>{t("common.loading")}</p>
           </div>
         </div>
       </section>
@@ -58,8 +62,8 @@ useEffect(() => {
       <section className="page-section">
         <div className="container">
           <div className="page-heading">
-            <span className="section-label">Citizen Services</span>
-            <h1>Document Checklist</h1>
+            <span className="section-label">{t("nav.services")}</span>
+            <h1>{t("services.docChecklistTitle")}</h1>
             <p className="error-message">{error}</p>
           </div>
         </div>
@@ -72,18 +76,12 @@ useEffect(() => {
       <div className="container">
 
         <div className="page-heading">
-          <span className="section-label">Citizen Services</span>
-
-          <h1>Document Checklist</h1>
-
-          <p>
-            Select a scheme to view the documents required
-            for the demonstration application process.
-          </p>
+          <span className="section-label">{t("nav.services")}</span>
+          <h1>{t("services.docChecklistTitle")}</h1>
+          <p>{t("services.docChecklistDesc")}</p>
         </div>
 
         <div className="checklist-selector">
-
           <label htmlFor="scheme">
             Select Scheme
           </label>
@@ -96,46 +94,44 @@ useEffect(() => {
             }
           >
             <option value="">
-              Select a scheme
+              -- Select a scheme --
             </option>
 
-            {schemes.map((item) => (
-              <option
-                key={item.id}
-                value={item.id}
-              >
-                {item.title}
-              </option>
-            ))}
+            {schemes.map((item) => {
+              const loc = getLocalizedScheme(item);
+              return (
+                <option
+                  key={loc.id}
+                  value={loc.id}
+                >
+                  {loc.title}
+                </option>
+              );
+            })}
           </select>
-
         </div>
 
         {scheme && (
           <div className="checklist-result">
-
             <div className="checklist-header">
               <span className="scheme-category">
                 {scheme.category}
               </span>
 
               <h2>{scheme.title}</h2>
-
               <p>{scheme.short_description}</p>
             </div>
 
             <div className="document-list">
-
-              {scheme.documents.map((documentName, index) => {
-                const documentId =
-                  documentMap[documentName];
+              {scheme.documents && scheme.documents.map((documentName, index) => {
+                const canonicalDocName = rawScheme?.documents?.[index] || documentName;
+                const documentId = documentMap[canonicalDocName];
 
                 return (
                   <div
                     className="document-item"
                     key={`${documentName}-${index}`}
                   >
-
                     <div className="document-number">
                       {index + 1}
                     </div>
@@ -148,31 +144,23 @@ useEffect(() => {
                           to={`/documents/${documentId}`}
                           className="document-link"
                         >
-                          View Document Information →
+                          {t("documents.viewDetails")} →
                         </Link>
                       ) : (
                         <span className="document-note">
-                          Supporting document
+                          {t("apply.requiredDoc")}
                         </span>
                       )}
                     </div>
-
                   </div>
                 );
               })}
-
             </div>
 
             <div className="checklist-note">
-              <strong>Demo Information:</strong>
-
-              <p>
-                This checklist contains demonstration data.
-                Actual document requirements may vary depending
-                on the applicable scheme and authority.
-              </p>
+              <strong>{t("footer.importantTitle")}</strong>
+              <p>{t("footer.disclaimerText")}</p>
             </div>
-
           </div>
         )}
 

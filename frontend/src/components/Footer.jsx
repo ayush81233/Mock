@@ -1,7 +1,10 @@
 import { Link } from "react-router-dom";
+import { useTranslation } from "../i18n";
 import "./Footer.css";
 
 function Footer() {
+  const { t } = useTranslation();
+
   return (
     <footer className="footer">
 
@@ -13,11 +16,10 @@ function Footer() {
 
           <div className="footer-column">
 
-            <h3>Sarkar Yojana Seva</h3>
+            <h3>{t("footer.brandTitle")}</h3>
 
             <p>
-              A demonstration portal for exploring government
-              schemes, citizen services and related information.
+              {t("footer.aboutText")}
             </p>
 
           </div>
@@ -27,19 +29,23 @@ function Footer() {
 
           <div className="footer-column">
 
-            <h3>Quick Links</h3>
+            <h3>{t("footer.quickLinksTitle")}</h3>
 
-            <Link to="/">Home</Link>
+            <Link to="/">{t("nav.home")}</Link>
 
-            <Link to="/schemes">Schemes</Link>
+            <Link to="/schemes">{t("nav.schemes")}</Link>
 
-            <Link to="/sir">SIR</Link>
+            <Link to="/documents">{t("nav.documents")}</Link>
 
-            <Link to="/documents">Documents</Link>
+            <Link to="/services">{t("nav.services")}</Link>
 
-            <Link to="/services">Citizen Services</Link>
+            <Link to="/search">{t("nav.search")}</Link>
 
-            <Link to="/search">Search</Link>
+            <Link to="/applications">{t("nav.applications")}</Link>
+
+            <Link to="/track-application">{t("nav.trackApplication")}</Link>
+
+            <Link to="/about">{t("nav.about")}</Link>
 
           </div>
 
@@ -48,24 +54,24 @@ function Footer() {
 
           <div className="footer-column">
 
-            <h3>Help & Support</h3>
+            <h3>{t("footer.helpTitle")}</h3>
 
-            <Link to="/help">FAQ</Link>
+            <Link to="/help">{t("footer.faq")}</Link>
 
             <Link to="/accessibility">
-              Accessibility
+              {t("footer.accessibility")}
             </Link>
 
             <Link to="/contact">
-              Contact
+              {t("footer.contact")}
             </Link>
 
             <Link to="/privacy">
-              Privacy
+              {t("footer.privacy")}
             </Link>
 
             <Link to="/disclaimer">
-              Disclaimer
+              {t("footer.disclaimer")}
             </Link>
 
           </div>
@@ -75,16 +81,14 @@ function Footer() {
 
           <div className="footer-column">
 
-            <h3>Important</h3>
+            <h3>{t("footer.importantTitle")}</h3>
 
             <p>
-              This website is a demonstration project and is not
-              an official government website.
+              {t("footer.demoText")}
             </p>
 
             <p>
-              Information displayed on this portal may contain
-              sample or mock data.
+              {t("footer.disclaimerText")}
             </p>
 
           </div>
@@ -95,7 +99,7 @@ function Footer() {
         <div className="footer-bottom">
 
           <p>
-            © 2026 Sarkar Yojana Seva. Demonstration Portal.
+            {t("footer.copyright")}
           </p>
 
         </div>
