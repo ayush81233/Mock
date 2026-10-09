@@ -18,6 +18,13 @@ def api_status(request):
 
 @api_view(["GET"])
 def scheme_list(request):
+    if Scheme.objects.count() == 0:
+        try:
+            from django.core.management import call_command
+            call_command("seed_schemes")
+        except Exception:
+            pass
+
     schemes = Scheme.objects.all()
 
     # Search
