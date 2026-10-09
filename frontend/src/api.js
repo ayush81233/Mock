@@ -1,5 +1,63 @@
-const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || "/api";
+const API_BASE_URL = (
+  import.meta.env.VITE_API_BASE_URL ||
+  "https://governmentyojana-zxvh.onrender.com/api"
+).replace(/\/+$/, "");
 
+/* =========================
+   RESPONSE HANDLING
+   ========================= */
+
+async function readJsonResponse(response, fallbackMessage) {
+  const contentType = response.headers.get("content-type") || "";
+  const text = await response.text();
+
+  let data = {};
+
+  if (contentType.includes("application/json")) {
+    try {
+      data = text ? JSON.parse(text) : {};
+    } catch {
+      throw new Error(
+        `The server returned invalid JSON (HTTP ${response.status}).`
+      );
+    }
+  } else {
+    const preview = text
+      .replace(/<[^>]*>/g, " ")
+      .replace(/\s+/g, " ")
+      .trim();
+
+    throw new Error(
+      `The API returned a non-JSON response (HTTP ${response.status}). ` +
+      (preview ? preview.slice(0, 180) : fallbackMessage)
+    );
+  }
+
+  if (!response.ok) {
+    throw new Error(
+      data.error || data.detail || fallbackMessage
+    );
+  }
+
+  return data;
+}
+
+function requireCitizenToken() {
+  const token = getCitizenToken();
+
+  if (!token) {
+    throw new Error("Citizen authentication is required.");
+  }
+
+  return token;
+}
+
+function tokenHeaders(token, extra = {}) {
+  return {
+    ...extra,
+    Authorization: `Token ${token}`,
+  };
+}
 
 /* =========================
    SCHEMES
@@ -24,28 +82,21 @@ export async function getSchemes(params = {}) {
 
   const response = await fetch(url);
 
-  if (!response.ok) {
-    throw new Error("Failed to fetch schemes");
-  }
+  const data = await readJsonResponse(
+    response,
+    "Failed to fetch schemes."
+  );
 
-  const data = await response.json();
-
-  return data.results;
+  return Array.isArray(data) ? data : (data.results || []);
 }
-
 
 export async function getScheme(id) {
   const response = await fetch(
-    `${API_BASE_URL}/schemes/${id}/`
+    `${API_BASE_URL}/schemes/${encodeURIComponent(id)}/`
   );
 
-  if (!response.ok) {
-    throw new Error("Failed to fetch scheme");
-  }
-
-  return response.json();
+  return readJsonResponse(response, "Failed to fetch scheme.");
 }
-
 
 /* =========================
    CITIZEN AUTHENTICATION
@@ -56,86 +107,55 @@ export async function requestOTP(mobile) {
     `${API_BASE_URL}/auth/request-otp/`,
     {
       method: "POST",
-
       headers: {
         "Content-Type": "application/json",
       },
-
-      body: JSON.stringify({
-        mobile,
-      }),
+      body: JSON.stringify({ mobile }),
     }
   );
 
-  const data = await response.json();
-
-  if (!response.ok) {
-    throw new Error(
-      data.error || "Unable to send OTP."
-    );
-  }
-
-  return data;
+  return readJsonResponse(response, "Unable to send OTP.");
 }
-
 
 export async function verifyOTP(mobile, otp) {
   const response = await fetch(
     `${API_BASE_URL}/auth/verify-otp/`,
     {
       method: "POST",
-
       headers: {
         "Content-Type": "application/json",
       },
-
-      body: JSON.stringify({
-        mobile,
-        otp,
-      }),
+      body: JSON.stringify({ mobile, otp }),
     }
   );
 
-  const data = await response.json();
-
-  if (!response.ok) {
-    throw new Error(
-      data.error || "Unable to verify OTP."
-    );
-  }
-
-  return data;
+  return readJsonResponse(response, "Unable to verify OTP.");
 }
-
 
 /* =========================
    CITIZEN SESSION
    ========================= */
 
 export function saveCitizenSession(data) {
-  localStorage.setItem(
-    "citizen_token",
-    data.token
-  );
+  if (!data?.token) {
+    throw new Error(
+      "The authentication response did not include a token."
+    );
+  }
 
+  localStorage.setItem("citizen_token", data.token);
   localStorage.setItem(
     "citizen",
-    JSON.stringify(data.citizen)
+    JSON.stringify(data.citizen ?? null)
   );
 }
-
 
 export function getCitizenToken() {
-  return localStorage.getItem(
-    "citizen_token"
-  );
+  return localStorage.getItem("citizen_token");
 }
 
-
 export function getCitizen() {
-  const citizen = localStorage.getItem(
-    "citizen"
-  );
+  const citizen = localStorage.getItem("citizen");
 
   if (!citizen) {
     return null;
@@ -148,45 +168,25 @@ export function getCitizen() {
   }
 }
 
-
 export function logoutCitizen() {
-  localStorage.removeItem(
-    "citizen_token"
-  );
-
-  localStorage.removeItem(
-    "citizen"
-  );
+  localStorage.removeItem("citizen_token");
+  localStorage.removeItem("citizen");
 }
-
 
 /* =========================
    APPLICATIONS
    ========================= */
 
-export async function createApplication(
-  schemeId,
-  formData
-) {
-  const token = getCitizenToken();
-
-  if (!token) {
-    throw new Error(
-      "Citizen authentication is required."
-    );
-  }
+export async function createApplication(schemeId, formData) {
+  const token = requireCitizenToken();
 
   const response = await fetch(
     `${API_BASE_URL}/applications/`,
     {
       method: "POST",
-
-      headers: {
+      headers: tokenHeaders(token, {
         "Content-Type": "application/json",
-
-        Authorization: `Token ${token}`,
-      },
-
+      }),
       body: JSON.stringify({
         scheme_id: schemeId,
         form_data: formData,
@@ -194,169 +194,95 @@ export async function createApplication(
     }
   );
 
-  const data = await response.json();
-
-  if (!response.ok) {
-    throw new Error(
-      data.error ||
-      "Unable to create application."
-    );
-  }
-
-  return data;
+  return readJsonResponse(
+    response,
+    "Unable to create application."
+  );
 }
 
-
 export async function getMyApplications() {
-  const token = getCitizenToken();
-
-  if (!token) {
-    throw new Error(
-      "Citizen authentication is required."
-    );
-  }
+  const token = requireCitizenToken();
 
   const response = await fetch(
     `${API_BASE_URL}/applications/mine/`,
     {
-      method: "GET",
-
-      headers: {
-        Authorization: `Token ${token}`,
-      },
+      headers: tokenHeaders(token),
     }
   );
 
-  const data = await response.json();
-
-  if (!response.ok) {
-    throw new Error(
-      data.error ||
-      "Unable to fetch applications."
-    );
-  }
-
-  return data;
+  return readJsonResponse(
+    response,
+    "Unable to fetch applications."
+  );
 }
 
-
-export async function getApplication(
-  applicationNumber
-) {
-  const token = getCitizenToken();
-
-  if (!token) {
-    throw new Error(
-      "Citizen authentication is required."
-    );
-  }
+export async function getApplication(applicationNumber) {
+  const token = requireCitizenToken();
 
   const response = await fetch(
-    `${API_BASE_URL}/applications/${applicationNumber}/`,
+    `${API_BASE_URL}/applications/${encodeURIComponent(applicationNumber)}/`,
     {
-      method: "GET",
-
-      headers: {
-        Authorization: `Token ${token}`,
-      },
+      headers: tokenHeaders(token),
     }
   );
 
-  const data = await response.json();
-
-  if (!response.ok) {
-    throw new Error(
-      data.error ||
-      "Unable to fetch application."
-    );
-  }
-
-  return data;
+  return readJsonResponse(
+    response,
+    "Unable to fetch application."
+  );
 }
-
 
 export async function updateApplication(
   applicationNumber,
   formData
 ) {
-  const token = getCitizenToken();
-
-  if (!token) {
-    throw new Error(
-      "Citizen authentication is required."
-    );
-  }
+  const token = requireCitizenToken();
 
   const response = await fetch(
-    `${API_BASE_URL}/applications/${applicationNumber}/`,
+    `${API_BASE_URL}/applications/${encodeURIComponent(applicationNumber)}/`,
     {
       method: "PATCH",
-
-      headers: {
+      headers: tokenHeaders(token, {
         "Content-Type": "application/json",
-
-        Authorization: `Token ${token}`,
-      },
-
+      }),
       body: JSON.stringify({
         form_data: formData,
       }),
     }
   );
 
-  const data = await response.json();
-
-  if (!response.ok) {
-    throw new Error(
-      data.error ||
-      "Unable to update application."
-    );
-  }
-
-  return data;
+  return readJsonResponse(
+    response,
+    "Unable to update application."
+  );
 }
-
 
 export async function submitApplication(
   applicationNumber,
   formData = null
 ) {
-  const token = getCitizenToken();
+  const token = requireCitizenToken();
 
-  if (!token) {
-    throw new Error(
-      "Citizen authentication is required."
-    );
-  }
-
-  const payload = formData ? { form_data: formData } : {};
+  const payload = formData
+    ? { form_data: formData }
+    : {};
 
   const response = await fetch(
-    `${API_BASE_URL}/applications/${applicationNumber}/submit/`,
+    `${API_BASE_URL}/applications/${encodeURIComponent(applicationNumber)}/submit/`,
     {
       method: "POST",
-
-      headers: {
+      headers: tokenHeaders(token, {
         "Content-Type": "application/json",
-        Authorization: `Token ${token}`,
-      },
-
+      }),
       body: JSON.stringify(payload),
     }
   );
 
-  const data = await response.json();
-
-  if (!response.ok) {
-    throw new Error(
-      data.error ||
-      "Unable to submit application."
-    );
-  }
-
-  return data;
+  return readJsonResponse(
+    response,
+    "Unable to submit application."
+  );
 }
-
 
 /* =========================
    DOCUMENTS
@@ -367,186 +293,163 @@ export async function uploadApplicationDocument(
   documentType,
   file
 ) {
-  const token = getCitizenToken();
-
-  if (!token) {
-    throw new Error("Citizen authentication is required.");
-  }
+  const token = requireCitizenToken();
 
   const formData = new FormData();
+
   formData.append("document_type", documentType);
   formData.append("file", file);
 
   const response = await fetch(
-    `${API_BASE_URL}/applications/${applicationNumber}/documents/`,
+    `${API_BASE_URL}/applications/${encodeURIComponent(applicationNumber)}/documents/`,
     {
       method: "POST",
-      headers: {
-        Authorization: `Token ${token}`,
-      },
+      headers: tokenHeaders(token),
       body: formData,
     }
   );
 
-  const data = await response.json();
-
-  if (!response.ok) {
-    throw new Error(data.error || "Unable to upload document.");
-  }
-
-  return data;
+  return readJsonResponse(
+    response,
+    "Unable to upload document."
+  );
 }
 
-
 export async function getApplicationDocuments(applicationNumber) {
-  const token = getCitizenToken();
-
-  if (!token) {
-    throw new Error("Citizen authentication is required.");
-  }
+  const token = requireCitizenToken();
 
   const response = await fetch(
-    `${API_BASE_URL}/applications/${applicationNumber}/documents/`,
+    `${API_BASE_URL}/applications/${encodeURIComponent(applicationNumber)}/documents/`,
     {
-      method: "GET",
-      headers: {
-        Authorization: `Token ${token}`,
-      },
+      headers: tokenHeaders(token),
     }
   );
 
-  const data = await response.json();
-
-  if (!response.ok) {
-    throw new Error(data.error || "Unable to fetch documents.");
-  }
-
-  return data;
+  return readJsonResponse(
+    response,
+    "Unable to fetch documents."
+  );
 }
-
 
 export async function deleteApplicationDocument(
   applicationNumber,
   documentId
 ) {
-  const token = getCitizenToken();
-
-  if (!token) {
-    throw new Error("Citizen authentication is required.");
-  }
+  const token = requireCitizenToken();
 
   const response = await fetch(
-    `${API_BASE_URL}/applications/${applicationNumber}/documents/${documentId}/`,
+    `${API_BASE_URL}/applications/${encodeURIComponent(applicationNumber)}/documents/${encodeURIComponent(documentId)}/`,
     {
       method: "DELETE",
-      headers: {
-        Authorization: `Token ${token}`,
-      },
+      headers: tokenHeaders(token),
     }
   );
 
-  const data = await response.json();
-
-  if (!response.ok) {
-    throw new Error(data.error || "Unable to delete document.");
+  if (response.status === 204 || response.status === 205) {
+    return null;
   }
 
-  return data;
+  return readJsonResponse(
+    response,
+    "Unable to delete document."
+  );
 }
-
 
 export async function downloadApplicationDocument(
   applicationNumber,
   documentId,
   fileName
 ) {
-  const token = getCitizenToken();
-
-  if (!token) {
-    throw new Error("Citizen authentication is required.");
-  }
+  const token = requireCitizenToken();
 
   const response = await fetch(
-    `${API_BASE_URL}/applications/${applicationNumber}/documents/${documentId}/download/`,
+    `${API_BASE_URL}/applications/${encodeURIComponent(applicationNumber)}/documents/${encodeURIComponent(documentId)}/download/`,
     {
-      headers: {
-        Authorization: `Token ${token}`,
-      },
+      headers: tokenHeaders(token),
     }
   );
 
   if (!response.ok) {
-    throw new Error("Unable to download document.");
+    throw new Error(
+      `Unable to download document (HTTP ${response.status}).`
+    );
   }
 
   const blob = await response.blob();
   const url = window.URL.createObjectURL(blob);
-  const a = document.createElement("a");
-  a.href = url;
-  a.download = fileName || "document";
-  document.body.appendChild(a);
-  a.click();
-  a.remove();
+
+  const anchor = document.createElement("a");
+  anchor.href = url;
+  anchor.download = fileName || "document";
+
+  document.body.appendChild(anchor);
+  anchor.click();
+  anchor.remove();
+
   window.URL.revokeObjectURL(url);
 }
-
 
 /* =========================
    PDF GENERATION & DOWNLOAD
    ========================= */
 
 export async function downloadApplicationPdf(applicationNumber) {
-  const token = getCitizenToken();
-
-  if (!token) {
-    throw new Error("Citizen authentication is required.");
-  }
+  const token = requireCitizenToken();
 
   const response = await fetch(
-    `${API_BASE_URL}/applications/${applicationNumber}/pdf/`,
+    `${API_BASE_URL}/applications/${encodeURIComponent(applicationNumber)}/pdf/`,
     {
-      headers: {
-        Authorization: `Token ${token}`,
-      },
+      headers: tokenHeaders(token),
     }
   );
 
   if (!response.ok) {
-    throw new Error("Unable to generate application PDF.");
+    throw new Error(
+      `Unable to generate application PDF (HTTP ${response.status}).`
+    );
   }
 
   const blob = await response.blob();
   const url = window.URL.createObjectURL(blob);
-  const a = document.createElement("a");
-  a.href = url;
-  a.download = `Application_${applicationNumber}.pdf`;
-  document.body.appendChild(a);
-  a.click();
-  a.remove();
+
+  const anchor = document.createElement("a");
+  anchor.href = url;
+  anchor.download = `Application_${applicationNumber}.pdf`;
+
+  document.body.appendChild(anchor);
+  anchor.click();
+  anchor.remove();
+
   window.URL.revokeObjectURL(url);
 }
 
-
-export async function downloadBlankFormPdf(schemeId, schemeTitle = "Scheme") {
+export async function downloadBlankFormPdf(
+  schemeId,
+  schemeTitle = "Scheme"
+) {
   const response = await fetch(
-    `${API_BASE_URL}/schemes/${schemeId}/blank-form-pdf/`
+    `${API_BASE_URL}/schemes/${encodeURIComponent(schemeId)}/blank-form-pdf/`
   );
 
   if (!response.ok) {
-    throw new Error("Unable to download blank form PDF.");
+    throw new Error(
+      `Unable to download blank form PDF (HTTP ${response.status}).`
+    );
   }
 
   const blob = await response.blob();
   const url = window.URL.createObjectURL(blob);
-  const a = document.createElement("a");
-  a.href = url;
-  a.download = `Blank_Form_${schemeId}.pdf`;
-  document.body.appendChild(a);
-  a.click();
-  a.remove();
+
+  const anchor = document.createElement("a");
+  anchor.href = url;
+  anchor.download = `Blank_Form_${schemeId}.pdf`;
+
+  document.body.appendChild(anchor);
+  anchor.click();
+  anchor.remove();
+
   window.URL.revokeObjectURL(url);
 }
-
 
 /* =========================
    NOTIFICATIONS
@@ -556,22 +459,24 @@ export async function getNotifications() {
   const token = getCitizenToken();
 
   if (!token) {
-    return { unread_count: 0, results: [] };
+    return {
+      unread_count: 0,
+      results: [],
+    };
   }
 
-  const response = await fetch(`${API_BASE_URL}/notifications/`, {
-    headers: {
-      Authorization: `Token ${token}`,
-    },
-  });
+  const response = await fetch(
+    `${API_BASE_URL}/notifications/`,
+    {
+      headers: tokenHeaders(token),
+    }
+  );
 
-  if (!response.ok) {
-    throw new Error("Unable to fetch notifications.");
-  }
-
-  return response.json();
+  return readJsonResponse(
+    response,
+    "Unable to fetch notifications."
+  );
 }
-
 
 export async function markNotificationRead(notificationId) {
   const token = getCitizenToken();
@@ -580,14 +485,21 @@ export async function markNotificationRead(notificationId) {
     return;
   }
 
-  await fetch(`${API_BASE_URL}/notifications/${notificationId}/read/`, {
-    method: "PATCH",
-    headers: {
-      Authorization: `Token ${token}`,
-    },
-  });
-}
+  const response = await fetch(
+    `${API_BASE_URL}/notifications/${encodeURIComponent(notificationId)}/read/`,
+    {
+      method: "PATCH",
+      headers: tokenHeaders(token),
+    }
+  );
 
+  if (!response.ok) {
+    await readJsonResponse(
+      response,
+      "Unable to mark notification as read."
+    );
+  }
+}
 
 export async function markAllNotificationsRead() {
   const token = getCitizenToken();
@@ -596,45 +508,42 @@ export async function markAllNotificationsRead() {
     return;
   }
 
-  await fetch(`${API_BASE_URL}/notifications/mark-all-read/`, {
-    method: "POST",
-    headers: {
-      Authorization: `Token ${token}`,
-    },
-  });
-}
+  const response = await fetch(
+    `${API_BASE_URL}/notifications/mark-all-read/`,
+    {
+      method: "POST",
+      headers: tokenHeaders(token),
+    }
+  );
 
+  if (!response.ok) {
+    await readJsonResponse(
+      response,
+      "Unable to mark notifications as read."
+    );
+  }
+}
 
 /* =========================
    DEMO REVIEW ACTIONS
    ========================= */
 
 export async function demoVerifyAllDocuments(applicationNumber) {
-  const token = getCitizenToken();
-
-  if (!token) {
-    throw new Error("Citizen authentication is required.");
-  }
+  const token = requireCitizenToken();
 
   const response = await fetch(
-    `${API_BASE_URL}/applications/${applicationNumber}/demo-verify/`,
+    `${API_BASE_URL}/applications/${encodeURIComponent(applicationNumber)}/demo-verify/`,
     {
       method: "POST",
-      headers: {
-        Authorization: `Token ${token}`,
-      },
+      headers: tokenHeaders(token),
     }
   );
 
-  const data = await response.json();
-
-  if (!response.ok) {
-    throw new Error(data.error || "Unable to complete demo verification.");
-  }
-
-  return data;
+  return readJsonResponse(
+    response,
+    "Unable to complete demo verification."
+  );
 }
-
 
 export async function demoVerifyDocument(
   applicationNumber,
@@ -642,77 +551,62 @@ export async function demoVerifyDocument(
   status = "VERIFIED",
   remarks = "Verified by YojanaSaathi Demo Review"
 ) {
-  const token = getCitizenToken();
-
-  if (!token) {
-    throw new Error("Citizen authentication is required.");
-  }
+  const token = requireCitizenToken();
 
   const response = await fetch(
-    `${API_BASE_URL}/applications/${applicationNumber}/documents/${documentId}/verify/`,
+    `${API_BASE_URL}/applications/${encodeURIComponent(applicationNumber)}/documents/${encodeURIComponent(documentId)}/verify/`,
     {
       method: "POST",
-      headers: {
+      headers: tokenHeaders(token, {
         "Content-Type": "application/json",
-        Authorization: `Token ${token}`,
-      },
-      body: JSON.stringify({ status, remarks }),
+      }),
+      body: JSON.stringify({
+        status,
+        remarks,
+      }),
     }
   );
 
-  const data = await response.json();
-
-  if (!response.ok) {
-    throw new Error(data.error || "Unable to verify document.");
-  }
-
-  return data;
+  return readJsonResponse(
+    response,
+    "Unable to verify document."
+  );
 }
 
-
 /* =========================
-   APPLICATION STATUS (Phase 4)
+   APPLICATION STATUS
    ========================= */
 
 export async function getApplicationStatus(applicationNumber) {
-  const token = getCitizenToken();
-
-  if (!token) {
-    throw new Error("Citizen authentication is required.");
-  }
+  const token = requireCitizenToken();
 
   const response = await fetch(
-    `${API_BASE_URL}/applications/${applicationNumber}/status/`,
+    `${API_BASE_URL}/applications/${encodeURIComponent(applicationNumber)}/status/`,
     {
-      method: "GET",
-      headers: {
-        Authorization: `Token ${token}`,
-      },
+      headers: tokenHeaders(token),
     }
   );
 
-  const data = await response.json();
-
-  if (!response.ok) {
-    throw new Error(data.error || "Unable to fetch application status.");
-  }
-
-  return data;
+  return readJsonResponse(
+    response,
+    "Unable to fetch application status."
+  );
 }
-
 
 /* =========================
    YOJANASAATHI AGENT DELEGATION
    ========================= */
 
-export async function createAgentDelegation(durationHours = 24, scopes = null) {
-  const token = getCitizenToken();
+export async function createAgentDelegation(
+  durationHours = 24,
+  scopes = null
+) {
+  const token = requireCitizenToken();
 
-  if (!token) {
-    throw new Error("Citizen authentication is required.");
-  }
+  const payload = {
+    duration_hours: durationHours,
+  };
 
-  const payload = { duration_hours: durationHours };
   if (scopes) {
     payload.scopes = scopes;
   }
@@ -721,77 +615,51 @@ export async function createAgentDelegation(durationHours = 24, scopes = null) {
     `${API_BASE_URL}/auth/agent-delegation/`,
     {
       method: "POST",
-      headers: {
+      headers: tokenHeaders(token, {
         "Content-Type": "application/json",
-        Authorization: `Token ${token}`,
-      },
+      }),
       body: JSON.stringify(payload),
     }
   );
 
-  const data = await response.json();
-
-  if (!response.ok) {
-    throw new Error(data.error || "Unable to create agent delegation.");
-  }
-
-  return data;
+  return readJsonResponse(
+    response,
+    "Unable to create agent delegation."
+  );
 }
 
-
 export async function getAgentDelegations() {
-  const token = getCitizenToken();
-
-  if (!token) {
-    throw new Error("Citizen authentication is required.");
-  }
+  const token = requireCitizenToken();
 
   const response = await fetch(
     `${API_BASE_URL}/auth/agent-delegations/`,
     {
-      method: "GET",
-      headers: {
-        Authorization: `Token ${token}`,
-      },
+      headers: tokenHeaders(token),
     }
   );
 
-  const data = await response.json();
-
-  if (!response.ok) {
-    throw new Error(data.error || "Unable to fetch agent delegations.");
-  }
-
-  return data;
+  return readJsonResponse(
+    response,
+    "Unable to fetch agent delegations."
+  );
 }
-
 
 export async function revokeAgentDelegation(delegationId) {
-  const token = getCitizenToken();
-
-  if (!token) {
-    throw new Error("Citizen authentication is required.");
-  }
+  const token = requireCitizenToken();
 
   const response = await fetch(
-    `${API_BASE_URL}/auth/agent-delegation/${delegationId}/revoke/`,
+    `${API_BASE_URL}/auth/agent-delegation/${encodeURIComponent(delegationId)}/revoke/`,
     {
       method: "POST",
-      headers: {
-        Authorization: `Token ${token}`,
-      },
+      headers: tokenHeaders(token),
     }
   );
 
-  const data = await response.json();
-
-  if (!response.ok) {
-    throw new Error(data.error || "Unable to revoke agent delegation.");
-  }
-
-  return data;
+  return readJsonResponse(
+    response,
+    "Unable to revoke agent delegation."
+  );
 }
-
 
 /* =========================
    API BASE URL
