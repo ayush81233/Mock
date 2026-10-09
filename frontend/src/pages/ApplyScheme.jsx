@@ -191,7 +191,7 @@ function ApplyScheme() {
         setApplication(activeApp);
       } catch (err) {
         console.error("Failed to create draft application:", err);
-        setError("Unable to create draft application for file upload.");
+        setError(err.message || "Unable to create draft application for file upload.");
         if (inputElement) inputElement.value = "";
         return;
       }

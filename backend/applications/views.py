@@ -89,10 +89,15 @@ def create_application(request):
     try:
         scheme = Scheme.objects.get(id=scheme_id)
     except Scheme.DoesNotExist:
-        return Response(
-            {"error": "Scheme not found."},
-            status=status.HTTP_404_NOT_FOUND
-        )
+        try:
+            from django.core.management import call_command
+            call_command("seed_schemes")
+            scheme = Scheme.objects.get(id=scheme_id)
+        except Scheme.DoesNotExist:
+            return Response(
+                {"error": f"Scheme '{scheme_id}' not found."},
+                status=status.HTTP_404_NOT_FOUND
+            )
 
     citizen = get_citizen_for_user(request.user)
     if not citizen:

@@ -61,10 +61,15 @@ def scheme_detail(request, scheme_id):
     try:
         scheme = Scheme.objects.get(id=scheme_id)
     except Scheme.DoesNotExist:
-        return Response(
-            {"error": "Scheme not found"},
-            status=404
-        )
+        try:
+            from django.core.management import call_command
+            call_command("seed_schemes")
+            scheme = Scheme.objects.get(id=scheme_id)
+        except Scheme.DoesNotExist:
+            return Response(
+                {"error": "Scheme not found"},
+                status=404
+            )
 
     serializer = SchemeSerializer(scheme)
 
