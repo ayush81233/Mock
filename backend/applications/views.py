@@ -1,5 +1,6 @@
 import os
 
+from django.core.exceptions import ObjectDoesNotExist
 from django.http import FileResponse, Http404
 from django.utils import timezone
 
@@ -33,6 +34,42 @@ ALLOWED_EXTENSIONS = {".pdf", ".jpg", ".jpeg", ".png"}
 MAX_FILE_SIZE = 5 * 1024 * 1024  # 5MB
 
 
+def get_citizen_for_user(user):
+    """
+    Safely retrieve or create the Citizen profile for the authenticated User.
+    Prevents AttributeError or Citizen.DoesNotExist exceptions.
+    """
+    if not user or not user.is_authenticated:
+        return None
+
+    try:
+        if hasattr(user, "citizen_profile") and user.citizen_profile:
+            return user.citizen_profile
+    except (ObjectDoesNotExist, Exception):
+        pass
+
+    citizen = Citizen.objects.filter(user=user).first()
+    if citizen:
+        return citizen
+
+    username = getattr(user, "username", "") or ""
+    if username.startswith("citizen_"):
+        mobile = username.replace("citizen_", "")
+        citizen = Citizen.objects.filter(mobile=mobile).first()
+        if citizen:
+            citizen.user = user
+            citizen.save(update_fields=["user"])
+            return citizen
+
+        return Citizen.objects.create(
+            user=user,
+            mobile=mobile,
+            is_verified=True,
+        )
+
+    return None
+
+
 # =========================================================
 # APPLICATION CRUD
 # =========================================================
@@ -57,9 +94,8 @@ def create_application(request):
             status=status.HTTP_404_NOT_FOUND
         )
 
-    try:
-        citizen = request.user.citizen_profile
-    except Citizen.DoesNotExist:
+    citizen = get_citizen_for_user(request.user)
+    if not citizen:
         return Response(
             {"error": "Citizen profile not found."},
             status=status.HTTP_400_BAD_REQUEST
@@ -74,8 +110,10 @@ def create_application(request):
 
     if existing_draft:
         incoming_form_data = request.data.get("form_data")
-        if incoming_form_data:
-            existing_draft.form_data.update(incoming_form_data)
+        if incoming_form_data and isinstance(incoming_form_data, dict):
+            current_form = existing_draft.form_data or {}
+            current_form.update(incoming_form_data)
+            existing_draft.form_data = current_form
             existing_draft.save(update_fields=["form_data", "updated_at"])
         serializer = ApplicationSerializer(existing_draft)
         return Response(serializer.data, status=status.HTTP_200_OK)
@@ -95,9 +133,8 @@ def create_application(request):
 @authentication_classes([TokenAuthentication])
 @permission_classes([IsAuthenticated])
 def my_applications(request):
-    try:
-        citizen = request.user.citizen_profile
-    except Citizen.DoesNotExist:
+    citizen = get_citizen_for_user(request.user)
+    if not citizen:
         return Response(
             {"error": "Citizen profile not found."},
             status=status.HTTP_400_BAD_REQUEST
@@ -124,9 +161,8 @@ def my_applications(request):
 @authentication_classes([TokenAuthentication])
 @permission_classes([IsAuthenticated])
 def application_detail(request, application_number):
-    try:
-        citizen = request.user.citizen_profile
-    except Citizen.DoesNotExist:
+    citizen = get_citizen_for_user(request.user)
+    if not citizen:
         return Response(
             {"error": "Citizen profile not found."},
             status=status.HTTP_400_BAD_REQUEST
@@ -178,9 +214,8 @@ def application_detail(request, application_number):
 @authentication_classes([TokenAuthentication])
 @permission_classes([IsAuthenticated])
 def submit_application(request, application_number):
-    try:
-        citizen = request.user.citizen_profile
-    except Citizen.DoesNotExist:
+    citizen = get_citizen_for_user(request.user)
+    if not citizen:
         return Response(
             {"error": "Citizen profile not found."},
             status=status.HTTP_400_BAD_REQUEST
@@ -291,9 +326,8 @@ def submit_application(request, application_number):
 @permission_classes([IsAuthenticated])
 @parser_classes([MultiPartParser, FormParser])
 def application_documents(request, application_number):
-    try:
-        citizen = request.user.citizen_profile
-    except Citizen.DoesNotExist:
+    citizen = get_citizen_for_user(request.user)
+    if not citizen:
         return Response(
             {"error": "Citizen profile not found."},
             status=status.HTTP_400_BAD_REQUEST
@@ -375,9 +409,8 @@ def application_documents(request, application_number):
 @authentication_classes([TokenAuthentication])
 @permission_classes([IsAuthenticated])
 def delete_document(request, application_number, document_id):
-    try:
-        citizen = request.user.citizen_profile
-    except Citizen.DoesNotExist:
+    citizen = get_citizen_for_user(request.user)
+    if not citizen:
         return Response({"error": "Citizen profile not found."}, status=status.HTTP_400_BAD_REQUEST)
 
     try:
@@ -400,17 +433,15 @@ def delete_document(request, application_number, document_id):
 @authentication_classes([TokenAuthentication])
 @permission_classes([IsAuthenticated])
 def download_document(request, application_number, document_id):
-    """
-    Secure authenticated endpoint to download an uploaded document.
-    Ensures only the owner citizen (or staff) can access the file.
-    """
     is_staff = request.user.is_staff or request.user.is_superuser
 
     try:
         if is_staff:
             application = Application.objects.get(application_number=application_number)
         else:
-            citizen = request.user.citizen_profile
+            citizen = get_citizen_for_user(request.user)
+            if not citizen:
+                raise Http404("Citizen profile not found.")
             application = Application.objects.get(
                 application_number=application_number,
                 citizen=citizen
@@ -442,10 +473,6 @@ def download_document(request, application_number, document_id):
 @authentication_classes([TokenAuthentication])
 @permission_classes([IsAuthenticated])
 def download_application_pdf(request, application_number):
-    """
-    Generate and stream an official printable application form PDF
-    populated with the real applicant data.
-    """
     is_staff = request.user.is_staff or request.user.is_superuser
 
     try:
@@ -457,7 +484,9 @@ def download_application_pdf(request, application_number):
                 .get(application_number=application_number)
             )
         else:
-            citizen = request.user.citizen_profile
+            citizen = get_citizen_for_user(request.user)
+            if not citizen:
+                raise Http404("Citizen profile not found.")
             application = (
                 Application.objects
                 .select_related("citizen", "scheme")
@@ -479,10 +508,6 @@ def download_application_pdf(request, application_number):
 @api_view(["GET"])
 @permission_classes([AllowAny])
 def download_blank_form_pdf(request, scheme_id):
-    """
-    Generate and stream an official blank printable application form PDF
-    dynamically built from the scheme data.
-    """
     try:
         scheme = Scheme.objects.get(id=scheme_id)
     except Scheme.DoesNotExist:
@@ -502,9 +527,8 @@ def download_blank_form_pdf(request, scheme_id):
 @authentication_classes([TokenAuthentication])
 @permission_classes([IsAuthenticated])
 def citizen_notifications(request):
-    try:
-        citizen = request.user.citizen_profile
-    except Citizen.DoesNotExist:
+    citizen = get_citizen_for_user(request.user)
+    if not citizen:
         return Response({"error": "Citizen profile not found."}, status=status.HTTP_400_BAD_REQUEST)
 
     notes = Notification.objects.filter(citizen=citizen).order_by("-created_at")
@@ -521,9 +545,8 @@ def citizen_notifications(request):
 @authentication_classes([TokenAuthentication])
 @permission_classes([IsAuthenticated])
 def mark_notification_read(request, notification_id):
-    try:
-        citizen = request.user.citizen_profile
-    except Citizen.DoesNotExist:
+    citizen = get_citizen_for_user(request.user)
+    if not citizen:
         return Response({"error": "Citizen profile not found."}, status=status.HTTP_400_BAD_REQUEST)
 
     try:
@@ -539,9 +562,8 @@ def mark_notification_read(request, notification_id):
 @authentication_classes([TokenAuthentication])
 @permission_classes([IsAuthenticated])
 def mark_all_notifications_read(request):
-    try:
-        citizen = request.user.citizen_profile
-    except Citizen.DoesNotExist:
+    citizen = get_citizen_for_user(request.user)
+    if not citizen:
         return Response({"error": "Citizen profile not found."}, status=status.HTTP_400_BAD_REQUEST)
 
     Notification.objects.filter(citizen=citizen, is_read=False).update(is_read=True)
@@ -556,10 +578,6 @@ def mark_all_notifications_read(request):
 @authentication_classes([TokenAuthentication])
 @permission_classes([IsAuthenticated])
 def demo_verify_document(request, application_number, document_id):
-    """
-    Reviewer / Demo action to verify a document, save verification status in DB,
-    and trigger citizen notification.
-    """
     new_status = request.data.get("status", "VERIFIED").upper()
     remarks = request.data.get("remarks", "Verified by YojanaSaathi Demo Review")
 
@@ -584,14 +602,10 @@ def demo_verify_document(request, application_number, document_id):
 @authentication_classes([TokenAuthentication])
 @permission_classes([IsAuthenticated])
 def demo_verify_all_documents(request, application_number):
-    """
-    Quick demo action: Verify all uploaded documents for this application,
-    recording verified_at and generating notifications.
-    """
     try:
         application = Application.objects.get(application_number=application_number)
     except Application.DoesNotExist:
-        return Response({"error": "Application not found."}, status=status.HTTP_404_NOT_FOUND)
+        return Response({"error": "Application not found."}, status=status.HTTP_400_BAD_REQUEST)
 
     docs = application.documents.all()
     if not docs.exists():
@@ -600,7 +614,6 @@ def demo_verify_all_documents(request, application_number):
     for doc in docs:
         verify_document(doc, "VERIFIED", remarks="Verified by YojanaSaathi Demo Review")
 
-    # If application status was SUBMITTED, update to UNDER_REVIEW or APPROVED
     if application.status == "SUBMITTED":
         application.status = "UNDER_REVIEW"
         application.save(update_fields=["status", "updated_at"])
@@ -620,41 +633,13 @@ def demo_verify_all_documents(request, application_number):
 @authentication_classes([TokenAuthentication])
 @permission_classes([IsAuthenticated])
 def application_status(request, application_number):
-    """
-    GET /api/applications/<application_number>/status/
-
-    Read-only endpoint returning minimal status information for an
-    authenticated citizen's own application.
-
-    Security:
-    - Requires a valid citizen Token (same authentication as all other
-      citizen endpoints).
-    - Enforces owner-only access: citizens may only query their own
-      applications. A non-existent application or one belonging to
-      another citizen returns 404, not 403, to avoid leaking existence.
-    - Returns only: application_number, scheme info, status, status label,
-      submission date, last-update date, and a next-step hint.
-    - Does NOT return: form_data, documents, Aadhaar numbers, bank
-      information, citizen phone number, or any internal notes.
-
-    Future Phase 4 (AI agent) integration:
-    - An external agent MUST authenticate as an individual citizen (Token
-      per citizen) or via a separately configured service-account mechanism
-      described in the README.
-    - A shared demo key that bypasses ownership checks must NOT be used.
-    - Rate limiting should be implemented at the reverse-proxy layer before
-      exposing this endpoint publicly.
-    """
-    try:
-        citizen = request.user.citizen_profile
-    except Exception:
+    citizen = get_citizen_for_user(request.user)
+    if not citizen:
         return Response(
             {"error": "Citizen profile not found."},
             status=status.HTTP_400_BAD_REQUEST
         )
 
-    # Return 404 for both "not found" and "belongs to another citizen" to
-    # avoid leaking the existence of other citizens' applications.
     try:
         application = Application.objects.select_related("scheme").get(
             application_number=application_number,
