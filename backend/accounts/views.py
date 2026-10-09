@@ -1,3 +1,4 @@
+
 import logging
 
 from django.conf import settings
@@ -18,32 +19,52 @@ logger = logging.getLogger(__name__)
 
 
 # =========================================================
-# TWILIO
+# TWILIO CLIENT
 # =========================================================
 
 def get_twilio_client():
-    return Client(
-        settings.TWILIO_ACCOUNT_SID,
-        settings.TWILIO_AUTH_TOKEN
-    )
+    account_sid = (settings.TWILIO_ACCOUNT_SID or "").strip()
+    auth_token = (settings.TWILIO_AUTH_TOKEN or "").strip()
+
+    if not account_sid or not auth_token:
+        raise RuntimeError(
+            "Twilio account credentials are not configured."
+        )
+
+    service_sid = (
+        getattr(settings, "TWILIO_VERIFY_SERVICE_SID", "") or ""
+    ).strip()
+
+    if not service_sid or not service_sid.startswith("VA"):
+        raise RuntimeError(
+            "TWILIO_VERIFY_SERVICE_SID is missing or invalid."
+        )
+
+    return Client(account_sid, auth_token)
 
 
 # =========================================================
-# MOBILE NUMBER NORMALIZATION & RESTRICTION
+# MOBILE NUMBER NORMALIZATION
 # =========================================================
 
 def normalize_mobile(mobile):
     """
-    Normalize mobile number to a 10-digit Indian mobile number.
-    Handles formats:
-    - XXXXXXXXXX
-    - 91XXXXXXXXXX
-    - +91XXXXXXXXXX
+    Accept:
+      9876543210
+      919876543210
+      +919876543210
+      09876543210
+
+    Return a 10-digit Indian mobile number or None.
     """
     if not mobile:
         return None
 
-    digits = "".join(filter(str.isdigit, str(mobile).strip()))
+    digits = "".join(
+        character
+        for character in str(mobile).strip()
+        if character.isdigit()
+    )
 
     if len(digits) == 12 and digits.startswith("91"):
         digits = digits[2:]
@@ -58,20 +79,29 @@ def normalize_mobile(mobile):
 
 def get_allowed_mobiles():
     """
-    Retrieve and normalize the authorized Twilio recipient mobile numbers.
-    Supports single or comma-separated numbers.
+    Read one or more authorized test numbers from
+    TWILIO_ALLOWED_MOBILE. Comma-separated values are supported.
     """
-    raw_allowed = getattr(settings, "TWILIO_ALLOWED_MOBILE", "")
+    raw_allowed = getattr(
+        settings, "TWILIO_ALLOWED_MOBILE", ""
+    )
+
     if isinstance(raw_allowed, (list, tuple)):
-        items = raw_allowed
+        numbers = raw_allowed
     else:
-        items = str(raw_allowed).split(",")
-    normalized = set()
-    for item in items:
-        norm = normalize_mobile(item.strip())
-        if norm:
-            normalized.add(norm)
-    return normalized
+        numbers = str(raw_allowed).split(",")
+
+    return {
+        normalized
+        for number in numbers
+        if (normalized := normalize_mobile(number))
+    }
+
+
+def validate_allowed_mobile(mobile):
+    allowed_mobiles = get_allowed_mobiles()
+
+    return bool(allowed_mobiles) and mobile in allowed_mobiles
 
 
 # =========================================================
@@ -80,65 +110,78 @@ def get_allowed_mobiles():
 
 @api_view(["POST"])
 def request_otp(request):
-    raw_mobile = request.data.get("mobile", "")
-    mobile = normalize_mobile(raw_mobile)
+    mobile = normalize_mobile(request.data.get("mobile", ""))
 
     if not mobile:
         return Response(
-            {
-                "error": "Please enter a valid 10-digit mobile number."
-            },
-            status=status.HTTP_400_BAD_REQUEST
+            {"error": "Please enter a valid 10-digit mobile number."},
+            status=status.HTTP_400_BAD_REQUEST,
         )
 
-    allowed_mobiles = get_allowed_mobiles()
-
-    # Only allow verified Twilio recipient number for trial account
-    if not allowed_mobiles or mobile not in allowed_mobiles:
+    if not validate_allowed_mobile(mobile):
         return Response(
             {
-                "error": "For this demo, OTP verification is available only for the registered test mobile number."
+                "error": (
+                    "OTP verification is available only for the "
+                    "configured test mobile number."
+                )
             },
-            status=status.HTTP_400_BAD_REQUEST
+            status=status.HTTP_400_BAD_REQUEST,
         )
 
     phone_number = f"+91{mobile}"
 
     try:
         client = get_twilio_client()
+
         verification = (
             client.verify.v2
-            .services(settings.TWILIO_VERIFY_SERVICE_SID)
+            .services(settings.TWILIO_VERIFY_SERVICE_SID.strip())
             .verifications
             .create(
                 channel="sms",
-                to=phone_number
+                to=phone_number,
             )
         )
 
+        logger.info(
+            "OTP request processed. status=%s",
+            verification.status,
+        )
+
         return Response(
             {
-                "message": "OTP sent successfully to your mobile number.",
+                "message": "OTP sent successfully.",
                 "status": verification.status,
             },
-            status=status.HTTP_200_OK
+            status=status.HTTP_200_OK,
         )
 
     except TwilioRestException as exc:
-        logger.error("Twilio error sending OTP: %s", exc)
-        return Response(
-            {
-                "error": "Unable to send OTP. Please try again."
-            },
-            status=status.HTTP_500_INTERNAL_SERVER_ERROR
+        logger.error(
+            "Twilio OTP request failed: status=%s code=%s message=%s",
+            exc.status,
+            exc.code,
+            exc.msg,
         )
-    except Exception as exc:
-        logger.error("Unexpected error sending OTP: %s", exc)
+
         return Response(
             {
-                "error": "Unable to send OTP. Please try again."
+                "error": (
+                    "Unable to send OTP. Check the Twilio "
+                    "configuration and backend logs."
+                ),
+                "twilio_error_code": exc.code,
             },
-            status=status.HTTP_500_INTERNAL_SERVER_ERROR
+            status=status.HTTP_502_BAD_GATEWAY,
+        )
+
+    except Exception:
+        logger.exception("Unexpected error while requesting OTP.")
+
+        return Response(
+            {"error": "Unable to send OTP. Please try again."},
+            status=status.HTTP_500_INTERNAL_SERVER_ERROR,
         )
 
 
@@ -148,112 +191,116 @@ def request_otp(request):
 
 @api_view(["POST"])
 def verify_otp(request):
-    raw_mobile = request.data.get("mobile", "")
-    otp = request.data.get("otp", "")
-
-    mobile = normalize_mobile(raw_mobile)
+    mobile = normalize_mobile(request.data.get("mobile", ""))
+    otp = str(request.data.get("otp", "")).strip()
 
     if not mobile:
         return Response(
-            {
-                "error": "Please enter a valid 10-digit mobile number."
-            },
-            status=status.HTTP_400_BAD_REQUEST
+            {"error": "Please enter a valid 10-digit mobile number."},
+            status=status.HTTP_400_BAD_REQUEST,
         )
 
-    allowed_mobiles = get_allowed_mobiles()
-
-    # Reject unauthorized number before calling Twilio verification checks
-    if not allowed_mobiles or mobile not in allowed_mobiles:
+    if not validate_allowed_mobile(mobile):
         return Response(
             {
-                "error": "For this demo, OTP verification is available only for the registered test mobile number."
+                "error": (
+                    "OTP verification is available only for the "
+                    "configured test mobile number."
+                )
             },
-            status=status.HTTP_400_BAD_REQUEST
+            status=status.HTTP_400_BAD_REQUEST,
         )
-
-    if not otp:
-        return Response(
-            {
-                "error": "OTP is required."
-            },
-            status=status.HTTP_400_BAD_REQUEST
-        )
-
-    otp = str(otp).strip()
 
     if len(otp) != 6 or not otp.isdigit():
         return Response(
-            {
-                "error": "Please enter a valid 6-digit OTP."
-            },
-            status=status.HTTP_400_BAD_REQUEST
+            {"error": "Please enter a valid 6-digit OTP."},
+            status=status.HTTP_400_BAD_REQUEST,
         )
 
     phone_number = f"+91{mobile}"
 
     try:
         client = get_twilio_client()
+
         verification_check = (
             client.verify.v2
-            .services(settings.TWILIO_VERIFY_SERVICE_SID)
+            .services(settings.TWILIO_VERIFY_SERVICE_SID.strip())
             .verification_checks
             .create(
                 to=phone_number,
-                code=otp
+                code=otp,
             )
         )
 
     except TwilioRestException as exc:
-        logger.error("Twilio error verifying OTP: %s", exc)
-        return Response(
-            {
-                "error": "Unable to verify OTP."
-            },
-            status=status.HTTP_500_INTERNAL_SERVER_ERROR
+        logger.error(
+            "Twilio verification failed: status=%s code=%s message=%s",
+            exc.status,
+            exc.code,
+            exc.msg,
         )
-    except Exception as exc:
-        logger.error("Unexpected error verifying OTP: %s", exc)
+
         return Response(
             {
-                "error": "Unable to verify OTP."
+                "error": (
+                    "Twilio could not verify the OTP. "
+                    "Check the Verify Service configuration and "
+                    "backend logs."
+                ),
+                "twilio_error_code": exc.code,
             },
-            status=status.HTTP_500_INTERNAL_SERVER_ERROR
+            status=status.HTTP_502_BAD_GATEWAY,
+        )
+
+    except Exception:
+        logger.exception("Unexpected error while verifying OTP.")
+
+        return Response(
+            {"error": "Unable to verify OTP. Please try again."},
+            status=status.HTTP_500_INTERNAL_SERVER_ERROR,
         )
 
     if verification_check.status != "approved":
         return Response(
-            {
-                "error": "Incorrect or expired OTP."
-            },
-            status=status.HTTP_400_BAD_REQUEST
+            {"error": "Incorrect or expired OTP."},
+            status=status.HTTP_400_BAD_REQUEST,
         )
 
     # =====================================================
-    # OTP VERIFIED
+    # OTP VERIFIED: GET OR CREATE USER AND CITIZEN
     # =====================================================
 
-    user, user_created = User.objects.get_or_create(
+    user, _ = User.objects.get_or_create(
         username=f"citizen_{mobile}"
     )
 
     citizen, citizen_created = Citizen.objects.get_or_create(
-        mobile=mobile
+        mobile=mobile,
+        defaults={
+            "user": user,
+            "is_verified": True,
+        },
     )
+
+    # Repair the relationship if the citizen already exists.
+    changed_fields = []
 
     if citizen.user_id != user.id:
         citizen.user = user
+        changed_fields.append("user")
 
-    citizen.is_verified = True
-    citizen.save()
+    if not citizen.is_verified:
+        citizen.is_verified = True
+        changed_fields.append("is_verified")
+
+    if changed_fields:
+        citizen.save(update_fields=changed_fields)
 
     # =====================================================
-    # AUTH TOKEN
+    # CREATE OR RETRIEVE DRF AUTH TOKEN
     # =====================================================
 
-    token, _ = Token.objects.get_or_create(
-        user=user
-    )
+    token, _ = Token.objects.get_or_create(user=user)
 
     return Response(
         {
@@ -261,7 +308,7 @@ def verify_otp(request):
             "token": token.key,
             "citizen_id": citizen.id,
             "is_new_citizen": citizen_created,
-            "citizen": CitizenSerializer(citizen).data
+            "citizen": CitizenSerializer(citizen).data,
         },
-        status=status.HTTP_200_OK
+        status=status.HTTP_200_OK,
     )
