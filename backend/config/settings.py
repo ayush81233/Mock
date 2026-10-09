@@ -1,9 +1,9 @@
+
 """
 Django settings for config project.
 
-Environment variables (via backend/.env or shell environment) control all
-sensitive and deployment-specific values. See backend/.env.example for the
-complete list of supported variables.
+Environment variables (via backend/.env or deployment environment)
+control all sensitive and deployment-specific values.
 """
 
 import os
@@ -14,60 +14,66 @@ from pathlib import Path
 from corsheaders.defaults import default_headers
 from dotenv import load_dotenv
 
-# Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
 
 load_dotenv(BASE_DIR / ".env")
 
 
 # ============================================================
-# SECURITY — All secrets come from environment variables only
+# SECURITY
 # ============================================================
 
 SECRET_KEY = os.getenv("DJANGO_SECRET_KEY")
 
 if not SECRET_KEY:
     if "test" in sys.argv:
-        # Use a safe dummy key only when running the automated test suite
         SECRET_KEY = "test-only-insecure-key-not-for-production-use"
     else:
         raise RuntimeError(
             "DJANGO_SECRET_KEY environment variable is not set. "
-            "Set it in backend/.env or in your shell environment before "
-            "starting the server. See backend/.env.example for instructions."
+            "Set it in backend/.env or your deployment environment."
         )
 
-
-# ============================================================
-# YOJANASAATHI AI AGENT CONFIGURATION
-# ============================================================
-
-# Secret key for machine-to-machine AI agent authentication fallback
-YOJANASAATHI_AGENT_API_KEY = os.getenv("YOJANASAATHI_AGENT_API_KEY", "")
+YOJANASAATHI_AGENT_API_KEY = os.getenv(
+    "YOJANASAATHI_AGENT_API_KEY", ""
+)
 
 
 # ============================================================
-# DEBUG MODE
+# DEBUG
 # ============================================================
 
-# Set DEBUG=False (or omit) in production.
-DEBUG = os.getenv("DJANGO_DEBUG", "True").lower() in ("true", "1", "yes")
+DEBUG = os.getenv(
+    "DJANGO_DEBUG", "False"
+).lower() in ("true", "1", "yes")
 
 
 # ============================================================
-# HOSTS AND ORIGINS
+# HOSTS, CORS AND CSRF
 # ============================================================
 
-_allowed_hosts_raw = os.getenv("DJANGO_ALLOWED_HOSTS", "127.0.0.1,localhost")
-ALLOWED_HOSTS = [h.strip() for h in _allowed_hosts_raw.split(",") if h.strip()]
+_allowed_hosts_raw = os.getenv(
+    "DJANGO_ALLOWED_HOSTS",
+    "https://governmentyojana-zxvh.onrender.com/,localhost,127.0.0.1"
+)
+
+ALLOWED_HOSTS = [
+    "governmentyojana-zxvh.onrender.com",
+    "localhost",
+    "127.0.0.1",
+]
 
 _cors_raw = os.getenv(
     "DJANGO_CORS_ALLOWED_ORIGINS",
     "http://localhost:5173,http://127.0.0.1:5173"
 )
-CORS_ALLOWED_ORIGINS = [o.strip() for o in _cors_raw.split(",") if o.strip()]
 
-# Allow custom headers for AI agent and citizen delegation in CORS
+CORS_ALLOWED_ORIGINS = [
+    origin.strip().rstrip("/")
+    for origin in _cors_raw.split(",")
+    if origin.strip()
+]
+
 CORS_ALLOW_HEADERS = list(default_headers) + [
     "x-agent-api-key",
     "x-citizen-delegation-token",
@@ -77,22 +83,29 @@ _csrf_raw = os.getenv(
     "DJANGO_CSRF_TRUSTED_ORIGINS",
     "http://localhost:5173,http://127.0.0.1:5173"
 )
-CSRF_TRUSTED_ORIGINS = [o.strip() for o in _csrf_raw.split(",") if o.strip()]
+
+CSRF_TRUSTED_ORIGINS = [
+    origin.strip().rstrip("/")
+    for origin in _csrf_raw.split(",")
+    if origin.strip()
+]
 
 
 # ============================================================
-# TWILIO OTP CONFIGURATION
+# TWILIO OTP
 # ============================================================
 
 TWILIO_ACCOUNT_SID = os.getenv("TWILIO_ACCOUNT_SID", "")
 TWILIO_AUTH_TOKEN = os.getenv("TWILIO_AUTH_TOKEN", "")
-TWILIO_VERIFY_SERVICE_SID = os.getenv("TWILIO_VERIFY_SERVICE_SID", "")
+TWILIO_VERIFY_SERVICE_SID = os.getenv(
+    "TWILIO_VERIFY_SERVICE_SID", ""
+)
 TWILIO_ALLOWED_MOBILE = os.getenv("TWILIO_ALLOWED_MOBILE", "")
 OTP_MODE = os.getenv("OTP_MODE", "twilio")
 
 
 # ============================================================
-# MEDIA FILES (Uploaded documents — never commit to Git)
+# MEDIA FILES
 # ============================================================
 
 MEDIA_URL = "/media/"
@@ -100,7 +113,7 @@ MEDIA_ROOT = BASE_DIR / "media"
 
 
 # ============================================================
-# APPLICATION DEFINITION
+# APPLICATIONS
 # ============================================================
 
 INSTALLED_APPS = [
@@ -123,7 +136,6 @@ INSTALLED_APPS = [
 
 MIDDLEWARE = [
     "corsheaders.middleware.CorsMiddleware",
-
     "django.middleware.security.SecurityMiddleware",
     "django.contrib.sessions.middleware.SessionMiddleware",
     "django.middleware.common.CommonMiddleware",
@@ -161,18 +173,40 @@ DATABASE_URL = os.getenv("DATABASE_URL")
 
 if DATABASE_URL:
     url = urllib.parse.urlparse(DATABASE_URL)
-    engine = "django.db.backends.postgresql" if "postgres" in url.scheme else "django.db.backends.sqlite3"
-    DATABASES = {
-        "default": {
-            "ENGINE": engine,
-            "NAME": url.path.lstrip("/"),
-            "USER": url.username or "",
-            "PASSWORD": url.password or "",
-            "HOST": url.hostname or "",
-            "PORT": str(url.port or "5432"),
-            "CONN_MAX_AGE": 600,
+
+    if url.scheme in ("postgres", "postgresql"):
+        DATABASES = {
+            "default": {
+                "ENGINE": "django.db.backends.postgresql",
+                "NAME": urllib.parse.unquote(
+                    url.path.lstrip("/")
+                ),
+                "USER": urllib.parse.unquote(
+                    url.username or ""
+                ),
+                "PASSWORD": urllib.parse.unquote(
+                    url.password or ""
+                ),
+                "HOST": url.hostname or "",
+                "PORT": str(url.port or "5432"),
+                "CONN_MAX_AGE": 600,
+                "OPTIONS": {
+                    "sslmode": "require",
+                },
+            }
         }
-    }
+    elif url.scheme == "sqlite":
+        DATABASES = {
+            "default": {
+                "ENGINE": "django.db.backends.sqlite3",
+                "NAME": url.path,
+            }
+        }
+    else:
+        raise ValueError(
+            "Unsupported DATABASE_URL scheme. "
+            "Use PostgreSQL or SQLite."
+        )
 else:
     DATABASES = {
         "default": {
@@ -188,16 +222,28 @@ else:
 
 AUTH_PASSWORD_VALIDATORS = [
     {
-        "NAME": "django.contrib.auth.password_validation.UserAttributeSimilarityValidator",
+        "NAME": (
+            "django.contrib.auth.password_validation."
+            "UserAttributeSimilarityValidator"
+        ),
     },
     {
-        "NAME": "django.contrib.auth.password_validation.MinimumLengthValidator",
+        "NAME": (
+            "django.contrib.auth.password_validation."
+            "MinimumLengthValidator"
+        ),
     },
     {
-        "NAME": "django.contrib.auth.password_validation.CommonPasswordValidator",
+        "NAME": (
+            "django.contrib.auth.password_validation."
+            "CommonPasswordValidator"
+        ),
     },
     {
-        "NAME": "django.contrib.auth.password_validation.NumericPasswordValidator",
+        "NAME": (
+            "django.contrib.auth.password_validation."
+            "NumericPasswordValidator"
+        ),
     },
 ]
 
@@ -207,7 +253,7 @@ AUTH_PASSWORD_VALIDATORS = [
 # ============================================================
 
 LANGUAGE_CODE = "en-us"
-TIME_ZONE = "UTC"
+TIME_ZONE = "Asia/Kolkata"
 USE_I18N = True
 USE_TZ = True
 
@@ -216,7 +262,7 @@ USE_TZ = True
 # STATIC FILES
 # ============================================================
 
-STATIC_URL = "static/"
+STATIC_URL = "/static/"
 STATIC_ROOT = BASE_DIR / "staticfiles"
 
 
@@ -224,18 +270,18 @@ STATIC_ROOT = BASE_DIR / "staticfiles"
 # EMAIL
 # ============================================================
 
-MAILERS = {
-    "default": {
-        "BACKEND": os.getenv(
-            "DJANGO_EMAIL_BACKEND",
-            "django.core.mail.backends.smtp.EmailBackend" if not DEBUG else "django.core.mail.backends.console.EmailBackend"
-        ),
-    },
-}
+EMAIL_BACKEND = os.getenv(
+    "DJANGO_EMAIL_BACKEND",
+    (
+        "django.core.mail.backends.smtp.EmailBackend"
+        if not DEBUG
+        else "django.core.mail.backends.console.EmailBackend"
+    ),
+)
 
 
 # ============================================================
-# REST FRAMEWORK & THROTTLING
+# DJANGO REST FRAMEWORK
 # ============================================================
 
 REST_FRAMEWORK = {
@@ -256,15 +302,28 @@ REST_FRAMEWORK = {
 
 
 # ============================================================
-# SECURITY & COOKIES (Production HTTPS settings)
+# PRODUCTION SECURITY
 # ============================================================
 
 if not DEBUG:
     SESSION_COOKIE_SECURE = True
     CSRF_COOKIE_SECURE = True
-    SECURE_HSTS_SECONDS = int(os.getenv("DJANGO_SECURE_HSTS_SECONDS", "31536000"))
+
+    SECURE_HSTS_SECONDS = int(
+        os.getenv("DJANGO_SECURE_HSTS_SECONDS", "31536000")
+    )
     SECURE_HSTS_INCLUDE_SUBDOMAINS = True
     SECURE_HSTS_PRELOAD = True
-    SECURE_PROXY_SSL_HEADER = ("HTTP_X_FORWARDED_PROTO", "https")
-    if os.getenv("DJANGO_SECURE_SSL_REDIRECT", "True").lower() in ("true", "1", "yes"):
+
+    SECURE_PROXY_SSL_HEADER = (
+        "HTTP_X_FORWARDED_PROTO",
+        "https",
+    )
+
+    if os.getenv(
+        "DJANGO_SECURE_SSL_REDIRECT", "True"
+    ).lower() in ("true", "1", "yes"):
         SECURE_SSL_REDIRECT = True
+
+    SECURE_CONTENT_TYPE_NOSNIFF = True
+    X_FRAME_OPTIONS = "DENY"
