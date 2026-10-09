@@ -8,8 +8,10 @@ complete list of supported variables.
 
 import os
 import sys
+import urllib.parse
 from pathlib import Path
 
+from corsheaders.defaults import default_headers
 from dotenv import load_dotenv
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
@@ -37,6 +39,14 @@ if not SECRET_KEY:
 
 
 # ============================================================
+# YOJANASAATHI AI AGENT CONFIGURATION
+# ============================================================
+
+# Secret key for machine-to-machine AI agent authentication fallback
+YOJANASAATHI_AGENT_API_KEY = os.getenv("YOJANASAATHI_AGENT_API_KEY", "")
+
+
+# ============================================================
 # DEBUG MODE
 # ============================================================
 
@@ -56,6 +66,12 @@ _cors_raw = os.getenv(
     "http://localhost:5173,http://127.0.0.1:5173"
 )
 CORS_ALLOWED_ORIGINS = [o.strip() for o in _cors_raw.split(",") if o.strip()]
+
+# Allow custom headers for AI agent and citizen delegation in CORS
+CORS_ALLOW_HEADERS = list(default_headers) + [
+    "x-agent-api-key",
+    "x-citizen-delegation-token",
+]
 
 _csrf_raw = os.getenv(
     "DJANGO_CSRF_TRUSTED_ORIGINS",
@@ -102,6 +118,7 @@ INSTALLED_APPS = [
     "schemes",
     "accounts",
     "applications",
+    "agent_api",
 ]
 
 MIDDLEWARE = [
@@ -140,12 +157,29 @@ WSGI_APPLICATION = "config.wsgi.application"
 # DATABASE
 # ============================================================
 
-DATABASES = {
-    "default": {
-        "ENGINE": "django.db.backends.sqlite3",
-        "NAME": BASE_DIR / "db.sqlite3",
+DATABASE_URL = os.getenv("DATABASE_URL")
+
+if DATABASE_URL:
+    url = urllib.parse.urlparse(DATABASE_URL)
+    engine = "django.db.backends.postgresql" if "postgres" in url.scheme else "django.db.backends.sqlite3"
+    DATABASES = {
+        "default": {
+            "ENGINE": engine,
+            "NAME": url.path.lstrip("/"),
+            "USER": url.username or "",
+            "PASSWORD": url.password or "",
+            "HOST": url.hostname or "",
+            "PORT": str(url.port or "5432"),
+            "CONN_MAX_AGE": 600,
+        }
     }
-}
+else:
+    DATABASES = {
+        "default": {
+            "ENGINE": "django.db.backends.sqlite3",
+            "NAME": BASE_DIR / "db.sqlite3",
+        }
+    }
 
 
 # ============================================================
@@ -192,30 +226,45 @@ STATIC_ROOT = BASE_DIR / "staticfiles"
 
 MAILERS = {
     "default": {
-        "BACKEND": "django.core.mail.backends.console.EmailBackend",
+        "BACKEND": os.getenv(
+            "DJANGO_EMAIL_BACKEND",
+            "django.core.mail.backends.smtp.EmailBackend" if not DEBUG else "django.core.mail.backends.console.EmailBackend"
+        ),
     },
 }
 
 
 # ============================================================
-# REST FRAMEWORK
+# REST FRAMEWORK & THROTTLING
 # ============================================================
 
 REST_FRAMEWORK = {
     "DEFAULT_AUTHENTICATION_CLASSES": [
         "rest_framework.authentication.TokenAuthentication",
     ],
+    "DEFAULT_THROTTLE_CLASSES": [
+        "rest_framework.throttling.AnonRateThrottle",
+        "rest_framework.throttling.UserRateThrottle",
+    ],
+    "DEFAULT_THROTTLE_RATES": {
+        "anon": "100/min",
+        "user": "300/min",
+        "agent_api": "120/min",
+        "agent_public": "300/min",
+    },
 }
 
 
 # ============================================================
-# COOKIE SECURITY (enable in production with HTTPS)
+# SECURITY & COOKIES (Production HTTPS settings)
 # ============================================================
 
 if not DEBUG:
     SESSION_COOKIE_SECURE = True
     CSRF_COOKIE_SECURE = True
-    SECURE_HSTS_SECONDS = 31536000
+    SECURE_HSTS_SECONDS = int(os.getenv("DJANGO_SECURE_HSTS_SECONDS", "31536000"))
     SECURE_HSTS_INCLUDE_SUBDOMAINS = True
     SECURE_HSTS_PRELOAD = True
     SECURE_PROXY_SSL_HEADER = ("HTTP_X_FORWARDED_PROTO", "https")
+    if os.getenv("DJANGO_SECURE_SSL_REDIRECT", "True").lower() in ("true", "1", "yes"):
+        SECURE_SSL_REDIRECT = True

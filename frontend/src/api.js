@@ -702,6 +702,98 @@ export async function getApplicationStatus(applicationNumber) {
 
 
 /* =========================
+   YOJANASAATHI AGENT DELEGATION
+   ========================= */
+
+export async function createAgentDelegation(durationHours = 24, scopes = null) {
+  const token = getCitizenToken();
+
+  if (!token) {
+    throw new Error("Citizen authentication is required.");
+  }
+
+  const payload = { duration_hours: durationHours };
+  if (scopes) {
+    payload.scopes = scopes;
+  }
+
+  const response = await fetch(
+    `${API_BASE_URL}/auth/agent-delegation/`,
+    {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Token ${token}`,
+      },
+      body: JSON.stringify(payload),
+    }
+  );
+
+  const data = await response.json();
+
+  if (!response.ok) {
+    throw new Error(data.error || "Unable to create agent delegation.");
+  }
+
+  return data;
+}
+
+
+export async function getAgentDelegations() {
+  const token = getCitizenToken();
+
+  if (!token) {
+    throw new Error("Citizen authentication is required.");
+  }
+
+  const response = await fetch(
+    `${API_BASE_URL}/auth/agent-delegations/`,
+    {
+      method: "GET",
+      headers: {
+        Authorization: `Token ${token}`,
+      },
+    }
+  );
+
+  const data = await response.json();
+
+  if (!response.ok) {
+    throw new Error(data.error || "Unable to fetch agent delegations.");
+  }
+
+  return data;
+}
+
+
+export async function revokeAgentDelegation(delegationId) {
+  const token = getCitizenToken();
+
+  if (!token) {
+    throw new Error("Citizen authentication is required.");
+  }
+
+  const response = await fetch(
+    `${API_BASE_URL}/auth/agent-delegation/${delegationId}/revoke/`,
+    {
+      method: "POST",
+      headers: {
+        Authorization: `Token ${token}`,
+      },
+    }
+  );
+
+  const data = await response.json();
+
+  if (!response.ok) {
+    throw new Error(data.error || "Unable to revoke agent delegation.");
+  }
+
+  return data;
+}
+
+
+/* =========================
    API BASE URL
    ========================= */
 

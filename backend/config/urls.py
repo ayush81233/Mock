@@ -18,12 +18,15 @@ urlpatterns = [
     # General API
     path("api/status/", api_status),
 
+    # Dedicated YojanaSaathi AI Agent Machine-to-Machine API (v1)
+    path("api/agent/v1/", include("agent_api.urls")),
+
     # Schemes API
     path("api/schemes/", scheme_list),
     path("api/schemes/<str:scheme_id>/", scheme_detail),
     path("api/schemes/<str:scheme_id>/blank-form-pdf/", download_blank_form_pdf),
 
-    # Citizen authentication
+    # Citizen authentication & delegation
     path("api/auth/", include("accounts.urls")),
 
     # Applications API
