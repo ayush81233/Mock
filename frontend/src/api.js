@@ -665,6 +665,39 @@ export async function revokeAgentDelegation(delegationId) {
 }
 
 /* =========================
+   ADMIN DASHBOARD API
+   ========================= */
+
+export async function getAdminApplications(params = {}) {
+  const queryParams = new URLSearchParams();
+  if (params.status) queryParams.set("status", params.status);
+  if (params.q) queryParams.set("q", params.q);
+
+  const queryString = queryParams.toString();
+  const url = queryString
+    ? `${API_BASE_URL}/applications/admin/all/?${queryString}`
+    : `${API_BASE_URL}/applications/admin/all/`;
+
+  const response = await fetch(url);
+  return readJsonResponse(response, "Failed to fetch admin applications.");
+}
+
+export async function updateAdminApplicationStatus(applicationNumber, status, remarks = "") {
+  const response = await fetch(
+    `${API_BASE_URL}/applications/admin/${encodeURIComponent(applicationNumber)}/status/`,
+    {
+      method: "PATCH",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({ status, remarks }),
+    }
+  );
+
+  return readJsonResponse(response, "Failed to update application status.");
+}
+
+/* =========================
    API BASE URL
    ========================= */
 

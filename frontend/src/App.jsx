@@ -25,6 +25,7 @@ import CitizenAccess from "./pages/CitizenAccess";
 import MyServices from "./pages/MyServices";
 import ApplyScheme from "./pages/ApplyScheme";
 import ApplicationDetails from "./pages/ApplicationDetails";
+import AdminDashboard from "./pages/AdminDashboard";
 
 import "./styles/global.css";
 
@@ -153,6 +154,17 @@ function App() {
             <Route
               path="/my-applications/:applicationNumber"
               element={<ApplicationDetails />}
+            />
+
+            {/* Admin Dashboard */}
+            <Route
+              path="/admin-dashboard"
+              element={<AdminDashboard />}
+            />
+
+            <Route
+              path="/admin"
+              element={<AdminDashboard />}
             />
 
           </Routes>

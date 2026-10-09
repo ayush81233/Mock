@@ -12,10 +12,16 @@ from .views import (
     download_application_pdf,
     demo_verify_document,
     demo_verify_all_documents,
+    admin_list_applications,
+    admin_update_application_status,
 )
 
 
 urlpatterns = [
+    # Admin dashboard endpoints (must come before generic <str:application_number>/)
+    path("admin/all/", admin_list_applications),
+    path("admin/<str:application_number>/status/", admin_update_application_status),
+
     path("", create_application),
     path("mine/", my_applications),
     # Status endpoint must appear BEFORE the generic <application_number>/ catch-all

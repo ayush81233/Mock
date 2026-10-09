@@ -19,10 +19,13 @@ from rest_framework.response import Response
 from accounts.models import Citizen
 from schemes.models import Scheme
 
+from django.db.models import Q
+
 from .models import Application, ApplicationDocument, Notification, verify_document
 from .pdf_generator import generate_application_pdf, generate_blank_form_pdf
 from .serializers import (
     ApplicationSerializer,
+    AdminApplicationSerializer,
     ApplicationDocumentSerializer,
     ApplicationStatusSerializer,
     NotificationSerializer,
@@ -658,3 +661,101 @@ def application_status(request, application_number):
 
     serializer = ApplicationStatusSerializer(application)
     return Response(serializer.data)
+
+
+# =========================================================
+# ADMIN DASHBOARD ENDPOINTS
+# =========================================================
+
+@api_view(["GET"])
+@permission_classes([AllowAny])
+def admin_list_applications(request):
+    """
+    List all applications for Admin Dashboard with optional search and status filter.
+    """
+    queryset = Application.objects.select_related("scheme", "citizen").prefetch_related("documents").all()
+
+    status_filter = request.GET.get("status", "").strip()
+    if status_filter and status_filter.upper() != "ALL":
+        queryset = queryset.filter(status=status_filter.upper())
+
+    search_query = request.GET.get("q", "").strip()
+    if search_query:
+        queryset = queryset.filter(
+            Q(application_number__icontains=search_query) |
+            Q(citizen__mobile__icontains=search_query) |
+            Q(citizen__full_name__icontains=search_query) |
+            Q(scheme__title__icontains=search_query)
+        )
+
+    queryset = queryset.order_by("-updated_at", "-created_at")
+
+    serializer = AdminApplicationSerializer(queryset, many=True)
+
+    all_apps = Application.objects.all()
+    stats = {
+        "total": all_apps.count(),
+        "submitted": all_apps.filter(status="SUBMITTED").count(),
+        "under_review": all_apps.filter(status="UNDER_REVIEW").count(),
+        "approved": all_apps.filter(status="APPROVED").count(),
+        "rejected": all_apps.filter(status="REJECTED").count(),
+        "correction_required": all_apps.filter(status="CORRECTION_REQUIRED").count(),
+        "draft": all_apps.filter(status="DRAFT").count(),
+    }
+
+    return Response({
+        "stats": stats,
+        "results": serializer.data
+    })
+
+
+@api_view(["PATCH", "POST"])
+@permission_classes([AllowAny])
+def admin_update_application_status(request, application_number):
+    """
+    Update application status from Admin Dashboard & notify citizen.
+    """
+    try:
+        application = Application.objects.select_related("scheme", "citizen").get(
+            application_number=application_number
+        )
+    except Application.DoesNotExist:
+        return Response(
+            {"error": f"Application {application_number} not found."},
+            status=status.HTTP_404_NOT_FOUND
+        )
+
+    new_status = request.data.get("status", "").strip().upper()
+    valid_statuses = [choice[0] for choice in Application.STATUS_CHOICES]
+
+    if not new_status or new_status not in valid_statuses:
+        return Response(
+            {"error": f"Invalid status '{new_status}'. Allowed: {', '.join(valid_statuses)}"},
+            status=status.HTTP_400_BAD_REQUEST
+        )
+
+    remarks = request.data.get("remarks", "").strip()
+
+    old_status = application.status
+    application.status = new_status
+    application.updated_at = timezone.now()
+    application.save(update_fields=["status", "updated_at"])
+
+    status_label = dict(Application.STATUS_CHOICES).get(new_status, new_status)
+    msg = f"Your application {application.application_number} ({application.scheme.title}) status changed to '{status_label}'."
+    if remarks:
+        msg += f" Note from admin: {remarks}"
+
+    Notification.objects.create(
+        citizen=application.citizen,
+        application=application,
+        title=f"Application Status: {status_label}",
+        message=msg,
+        type="STATUS_UPDATE",
+    )
+
+    serializer = AdminApplicationSerializer(application)
+    return Response({
+        "message": f"Application status updated from {old_status} to {new_status}.",
+        "application": serializer.data
+    })

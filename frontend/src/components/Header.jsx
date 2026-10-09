@@ -147,6 +147,10 @@ function Header() {
             {t("nav.about")}
           </Link>
 
+          <Link to="/admin-dashboard" data-testid="nav-admin-portal" style={{ color: "#818cf8", fontWeight: "700" }}>
+            🛡 Admin Portal
+          </Link>
+
         </div>
       </nav>
     </header>
