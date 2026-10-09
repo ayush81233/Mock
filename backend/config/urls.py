@@ -3,6 +3,7 @@ from django.conf.urls.static import static
 from django.contrib import admin
 from django.urls import include, path
 
+
 from applications.views import (
     citizen_notifications,
     download_blank_form_pdf,
