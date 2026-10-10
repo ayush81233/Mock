@@ -1,8 +1,10 @@
 
 import logging
+import random
 
 from django.conf import settings
 from django.contrib.auth.models import User
+from django.core.cache import cache
 
 from rest_framework import status
 from rest_framework.authtoken.models import Token
@@ -16,6 +18,14 @@ from .models import Citizen
 from .serializers import CitizenSerializer
 
 logger = logging.getLogger(__name__)
+
+
+# =========================================================
+# OTP MODE HELPER
+# =========================================================
+
+def get_otp_mode():
+    return (getattr(settings, "OTP_MODE", "twilio") or "twilio").strip().lower()
 
 
 # =========================================================
@@ -129,6 +139,39 @@ def request_otp(request):
             status=status.HTTP_400_BAD_REQUEST,
         )
 
+    otp_mode = get_otp_mode()
+
+    # ── CONSOLE / MOCK MODE ──────────────────────────────
+    if otp_mode in ("console", "mock", "dev"):
+        otp = str(random.randint(100000, 999999))
+        cache_key = f"otp_console_{mobile}"
+        cache.set(cache_key, otp, timeout=300)  # 5-minute expiry
+
+        logger.warning(
+            "\n"
+            "=" * 60 + "\n"
+            "  [CONSOLE OTP MODE] OTP for +91%s : %s\n"
+            "  (Valid for 5 minutes)\n"
+            "=" * 60,
+            mobile,
+            otp,
+        )
+        print(
+            f"\n{'='*60}\n"
+            f"  [CONSOLE OTP] Mobile: +91{mobile}  OTP: {otp}\n"
+            f"{'='*60}\n"
+        )
+
+        return Response(
+            {
+                "message": "OTP sent (console mode — check server terminal).",
+                "status": "pending",
+                "dev_note": "OTP printed in backend terminal. Check server logs.",
+            },
+            status=status.HTTP_200_OK,
+        )
+
+    # ── TWILIO MODE ──────────────────────────────────────
     phone_number = f"+91{mobile}"
 
     try:
@@ -218,25 +261,50 @@ def verify_otp(request):
                 status=status.HTTP_400_BAD_REQUEST,
             )
 
-        phone_number = f"+91{mobile}"
+        otp_mode = get_otp_mode()
 
-        client = get_twilio_client()
+        # ── CONSOLE / MOCK MODE ──────────────────────────────
+        if otp_mode in ("console", "mock", "dev"):
+            cache_key = f"otp_console_{mobile}"
+            stored_otp = cache.get(cache_key)
 
-        verification_check = (
-            client.verify.v2
-            .services(settings.TWILIO_VERIFY_SERVICE_SID.strip())
-            .verification_checks
-            .create(
-                to=phone_number,
-                code=otp,
+            if not stored_otp:
+                return Response(
+                    {"error": "OTP expired or not generated. Please request a new OTP."},
+                    status=status.HTTP_400_BAD_REQUEST,
+                )
+
+            if otp != stored_otp:
+                return Response(
+                    {"error": "Incorrect OTP. Please check the server terminal for the correct OTP."},
+                    status=status.HTTP_400_BAD_REQUEST,
+                )
+
+            # OTP matched — delete from cache to prevent reuse
+            cache.delete(cache_key)
+            logger.info("Console OTP verified for mobile %s", mobile)
+
+        else:
+            # ── TWILIO MODE ──────────────────────────────────────
+            phone_number = f"+91{mobile}"
+
+            client = get_twilio_client()
+
+            verification_check = (
+                client.verify.v2
+                .services(settings.TWILIO_VERIFY_SERVICE_SID.strip())
+                .verification_checks
+                .create(
+                    to=phone_number,
+                    code=otp,
+                )
             )
-        )
 
-        if verification_check.status != "approved":
-            return Response(
-                {"error": "Incorrect or expired OTP."},
-                status=status.HTTP_400_BAD_REQUEST,
-            )
+            if verification_check.status != "approved":
+                return Response(
+                    {"error": "Incorrect or expired OTP."},
+                    status=status.HTTP_400_BAD_REQUEST,
+                )
 
         # =====================================================
         # OTP VERIFIED: GET OR CREATE USER AND CITIZEN SAFELY
